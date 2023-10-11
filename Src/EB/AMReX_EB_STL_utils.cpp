@@ -236,6 +236,31 @@ STLtools::read_ascii_stl_file (std::string const& fname, Real scale,
     }
 }
 
+// EY: From Hari's code
+Real STLtools::getSignedDistance(Real x,Real y,Real z)
+{
+
+    Real sign,dist;
+    int num_intersects=0;
+
+    Point crd(x,y,z);
+
+    //FIXME: get a point outside from user
+    Point point_outside(m_outpx,m_outpy,m_outpz);
+    Segment out_to_coord(point_outside,crd);
+    num_intersects=(*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
+
+    sign=(num_intersects%2==0)?1.0:-1.0;
+
+    Point closest_point = (*m_aabb_tree).closest_point(crd);
+    FT sqd = (*m_aabb_tree).squared_distance(crd);
+    dist=sqrt(sqd)*sign;
+
+    return(dist);
+}
+
+
+
 void
 STLtools::prepare ()
 {
@@ -389,7 +414,7 @@ STLtools::prepare ()
             m_ptref.x = cent0.x + (Lp+Leps) * norm.x;
             m_ptref.y = cent0.y + (Lp+Leps) * norm.y;
             m_ptref.z = cent0.z + (Lp+Leps) * norm.z;
-            is_ref_positive = true;
+            is_ref_positive = true; //outward (outside surface)
         } else {
             m_ptref.x = cent0.x + (Lm-Leps) * norm.x;
             m_ptref.y = cent0.y + (Lm-Leps) * norm.y;

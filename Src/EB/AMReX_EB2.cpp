@@ -208,6 +208,7 @@ Build (const Geometry& geom, int required_coarsening_level,
     }
     else if (geom_type == "stl")
     {
+        ParmParse pp;
         std::string stl_file;
         pp.get("stl_file", stl_file);
         Real stl_scale = 1._rt;
