@@ -8,6 +8,18 @@
 #include <AMReX_EB2_Graph.H>
 
 //EY from Hari - for CGAL
+#include <AMReX.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_REAL.H>
+#include <AMReX_Vector.H>
+#include <AMReX_FArrayBox.H>
+#include <AMReX_Box.H>
+
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_triangle_primitive.h>
+
 typedef CGAL::Simple_cartesian<double> K;
 typedef K::FT FT;
 typedef K::Ray_3 Ray;
@@ -52,6 +64,27 @@ private:
                               Array<Real,3> const& center, int reverse_normal);
     void read_binary_stl_file (std::string const& fname, Real scale,
                                Array<Real,3> const& center, int reverse_normal);
+
+
+    // EY from Hari for CGAL
+        //host vectors
+    Gpu::PinnedVector<Real> m_tri_normals_h;
+
+    //device vectors
+    // Gpu::DeviceVector<amrex::Real> m_tri_normals_d;
+
+    int  m_ndata_per_tri=9;    //three points x 3 coordinates
+    int  m_ndata_per_normal=3; //three components
+    int  m_nlines_per_facet=7; //specific to ASCII STLs
+    Real m_inside  = -1.0;
+    Real m_outside =  1.0;
+
+    std::list<Triangle> m_triangles;
+    Tree *m_aabb_tree;
+
+    Real m_outpx = 1e5;
+    Real m_outpy = 1e5;
+    Real m_outpz = 1e5;
 
 public:
 

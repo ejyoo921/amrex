@@ -254,7 +254,7 @@ Real STLtools::getSignedDistance(Real x,Real y,Real z)
 
     Point closest_point = (*m_aabb_tree).closest_point(crd);
     FT sqd = (*m_aabb_tree).squared_distance(crd);
-    dist=sqrt(sqd)*sign;
+    dist = std::sqrt(sqd)*sign;
 
     return(dist);
 }
