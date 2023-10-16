@@ -356,7 +356,7 @@ STLtools::prepare ()
         // with the bounding box defined by m_ptmin and m_ptmax.
         Real Lx, Ly, Lz;
         constexpr Real eps = std::numeric_limits<Real>::epsilon();
-        if (norm.x > eps) {
+        if (norm.x > eps) { //EY: you mean, when norm.x is positive?
             Lx = (m_ptmax.x-cent0.x) / norm.x;
         } else if (norm.x < -eps) {
             Lx = (m_ptmin.x-cent0.x) / norm.x;
@@ -378,6 +378,8 @@ STLtools::prepare ()
             Lz = std::numeric_limits<Real>::max();
         }
         Real Lp = std::min({Lx,Ly,Lz});
+
+        // EY: RE-compute Lx, Ly, and Lz for ... Lm
         if (norm.x > eps) {
             Lx = (m_ptmin.x-cent0.x) / norm.x;
         } else if (norm.x < -eps) {
@@ -399,6 +401,9 @@ STLtools::prepare ()
         } else {
             Lz = std::numeric_limits<Real>::lowest();
         }
+        Real Lm = std::max({Lx,Ly,Lz});
+
+        // EY: change the magnitude of the normal?
         if (std::abs(norm.x) < 1.e-5) {
             norm.x = std::copysign(Real(1.e-5), norm.x);
         }
@@ -408,18 +413,18 @@ STLtools::prepare ()
         if (std::abs(norm.z) < 1.e-5) {
             norm.z = std::copysign(Real(1.e-5), norm.z);
         }
-        Real Lm = std::max({Lx,Ly,Lz});
+
         Real Leps = std::max(Lp,-Lm) * Real(0.009);
         if (Lp < -Lm) {
             m_ptref.x = cent0.x + (Lp+Leps) * norm.x;
             m_ptref.y = cent0.y + (Lp+Leps) * norm.y;
             m_ptref.z = cent0.z + (Lp+Leps) * norm.z;
-            is_ref_positive = true; //outward (outside surface)
+            is_ref_positive = true; 
         } else {
             m_ptref.x = cent0.x + (Lm-Leps) * norm.x;
             m_ptref.y = cent0.y + (Lm-Leps) * norm.y;
             m_ptref.z = cent0.z + (Lm-Leps) * norm.z;
-            is_ref_positive = false;
+            is_ref_positive = false; //outward (outside surface)
         }
     }
 
@@ -432,7 +437,7 @@ STLtools::prepare ()
                 return 1-is_ref_positive;
             } else {
                 Real p1[] = {ptref.x, ptref.y, ptref.z};
-                Real p2[] = {cent0.x, cent0.y, cent0.z};
+                Real p2[] = {cent0.x, cent0.y, cent0.z}; //EY: Is this reprensenting a center of each triangle now?
                 return static_cast<int>(line_tri_intersects(p1, p2, tri_pts[i]));
             }
         });

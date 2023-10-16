@@ -1,6 +1,6 @@
 
 AMREX_HOME := $(shell pwd)
-INCLUDE_LOCATIONS += /projects/nawims/CGAL/include 
+INCLUDE_LOCATIONS += /usr/local/opt/cgal/lib/cmake/CGAL/
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 

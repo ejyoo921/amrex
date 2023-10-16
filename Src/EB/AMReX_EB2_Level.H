@@ -269,7 +269,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         m_covered_grids = BoxArray(std::move(covered_boxes));
     }
 
-    if (cut_boxes.isEmpty()) {
+    if (cut_boxes.isEmpty()) { // EY: No EB
         m_grids = BoxArray();
         m_dmap = DistributionMapping();
         m_allregular = true;
@@ -278,7 +278,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     }
 
     m_grids = BoxArray(std::move(cut_boxes));
-    m_dmap = DistributionMapping(m_grids);
+    m_dmap = DistributionMapping(m_grids); //EY: parallel distribution
 
     m_mgf.define(m_grids, m_dmap);
     const int ng = GFab::ng;
