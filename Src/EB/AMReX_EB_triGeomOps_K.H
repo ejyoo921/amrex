@@ -28,6 +28,9 @@ namespace amrex::tri_geom_ops
                     +  L1[3]*L2[2]
                     +  L1[4]*L2[0]
                     +  L1[5]*L2[1] );
+
+            // EY: return value: zero when L1 and L2 intersect or are parallel
+            //                   non-zero otherwise, including NO intersections
         }
         //================================================================================
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void getvec(const Real P1[3],const Real P2[3],Real v[3])
@@ -63,12 +66,16 @@ namespace amrex::tri_geom_ops
             L[5] = v2[1]       - v1[1];
         }
         //================================================================================
-        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void side_op3(Real v1[3],Real v2[3],
-                Real t1[3],Real t2[3],Real t3[3],
-                Real &S1, Real &S2, Real &S3)
+        AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE void side_op3(Real v1[3],Real v2[3], 
+                                                                Real t1[3],Real t2[3],Real t3[3],
+                                                                 Real &S1, Real &S2, Real &S3)
         {
 
             Real L[6],e1[6],e2[6],e3[6];
+
+            // EY: v1 is the ref. point outise of the triangle (fluid) for sure.
+            //     v2 is the centroid of the triangle we care about now. 
+            //     t_s are the verticies of the triangle.
 
             get_plucker_coords(v1,v2,L);
             get_plucker_coords(t1,t2,e1);
@@ -198,7 +205,7 @@ namespace amrex::tri_geom_ops
         }
         //================================================================================
         AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE int lineseg_tri_intersect(Real v1[3],Real v2[3],
-                Real t1[3],Real t2[3],Real t3[3])
+                                                                            Real t1[3],Real t2[3],Real t3[3])
         {
             //see plucker coordinates based method
             //https://members.loria.fr/SLazard/ARC-Visi3D/Pant-project/files/Line_Triangle.html
@@ -206,6 +213,10 @@ namespace amrex::tri_geom_ops
             Real S1,S2,S3;
             Real tri_area,area1,area2;
             Real L2[6],L3[6],L4[6],ls_s1,ls_s2;
+
+            // EY: v1 is the ref. point outise of the triangle (fluid) for sure.
+            //     v2 is the centroid of the triangle we care about now. 
+            //     t_s are the verticies of the triangle.
 
             side_op3(v1,v2,t1,t2,t3,S1,S2,S3);
 

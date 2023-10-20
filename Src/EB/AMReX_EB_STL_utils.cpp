@@ -236,7 +236,7 @@ STLtools::read_ascii_stl_file (std::string const& fname, Real scale,
     }
 }
 
-// EY: From Hari's code
+// EY: From Hari's code -- from CGAL -- require the installation.
 Real STLtools::getSignedDistance(Real x,Real y,Real z)
 {
 
@@ -458,6 +458,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     XDim3 ptmin = m_ptmin;
     XDim3 ptmax = m_ptmax;
     XDim3 ptref = m_ptref;
+
     Real reference_value = m_boundry_is_outside ? outside_value :  inside_value;
     Real other_value     = m_boundry_is_outside ?  inside_value : outside_value;
 
@@ -468,12 +469,14 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
         Real coords[3];
         coords[0]=plo[0]+static_cast<Real>(i)*dx[0];
         coords[1]=plo[1]+static_cast<Real>(j)*dx[1];
+
 #if (AMREX_SPACEDIM == 2)
         coords[2]=Real(0.);
 #else
         coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
         int num_intersects=0;
+        // EY: Check the points only if they are near the bounding box
         if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
             coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
@@ -558,9 +561,11 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
 
             return (num_intersects % 2 == 0) ? ref_value : 1-ref_value;
         });
+
         ReduceTuple hv = reduce_data.value(reduce_op);
         Long nfluid = static_cast<Long>(amrex::get<0>(hv));
         Long npts = box.numPts();
+         
         if (nfluid == 0) {
             return allcovered;
         } else if (nfluid == npts) {
