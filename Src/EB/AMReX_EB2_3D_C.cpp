@@ -1,5 +1,9 @@
 #include <AMReX_EB2_C.H>
 
+//EY
+#include <AMReX_EBFabFactory.H>
+#include <AMReX_PlotFileUtil.H>
+
 namespace amrex::EB2 {
 
 namespace {
@@ -446,9 +450,21 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             } else {
                 ++ncuts;
                 Real cut = (interz(i,j+1,k)-(problo[2]+k*dx[2]))*dzinv;
+    
                 bcy += 1.0_rt;
                 bcz += cut;
                 lzp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                // if (i == 1 && j == -1 && k == -1)
+                // {
+                //     amrex::Print() << "interz(i,j+1,k) = " << interz(i,j+1,k) << "\n";
+                //     amrex::Print() << "problo[2] = " << problo[2] << "\n";
+                //     amrex::Print() << "dz = " << dx[2] << "\n";      
+                //     amrex::Print() << "cut = " << cut << "\n";
+                //     amrex::Print() << "bcy = " << bcy << "\n";   
+                //     amrex::Print() << "levset(i,j+1,k) = " << levset(i,j+1,k) << "\n";  
+                //     amrex::Print() << "lzp = " << lzp << "\n";                        
+                // }
             }
 
             if (ncuts > 2) {
@@ -485,6 +501,13 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
         }
     });
 
+    
+    amrex::Print() << "*hp after xbx = " << *hp << "\n";
+    if (*hp > 0)
+    {
+        amrex::Print() << "ybx bad " << "\n";
+    }
+    
     const Box& ybx = amrex::grow(amrex::surroundingNodes(bx,1),1);
     AMREX_HOST_DEVICE_FOR_3D ( ybx, i, j, k,
     {
@@ -592,7 +615,16 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
+    
+    amrex::Print() << "*hp after ybx = " << *hp << "\n";
 
+    if (*hp > 0)
+    {
+        amrex::Print() << "ybx bad " << "\n";
+    }
+
+    // EY : count bad ones
+    int ct_zbx_bad = 0; 
     const Box& zbx = amrex::grow(amrex::surroundingNodes(bx,2),1);
     AMREX_HOST_DEVICE_FOR_3D ( zbx, i, j, k,
     {
@@ -622,6 +654,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lxm = 0.0_rt;
             } else {
                 ++ncuts;
+                amrex::PrintToFile("ncuts++") << "(lxm) ex(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
                 Real cut = (interx(i,j,k)-(problo[0]+i*dx[0]))*dxinv;
                 bcx += cut;
                 lxm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
@@ -635,6 +668,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lxp = 0.0_rt;
             } else {
                 ++ncuts;
+                amrex::PrintToFile("ncuts++") << "(lxp) ex(i,j+1,k) index: (i,j+1,k) = (" << i << "," << j+1 << "," << k << ")  \n";
                 Real cut = (interx(i,j+1,k)-(problo[0]+i*dx[0]))*dxinv;
                 bcx += cut;
                 bcy += 1.0_rt;
@@ -649,6 +683,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lym = 0.0_rt;
             } else {
                 ++ncuts;
+                amrex::PrintToFile("ncuts++") << "(lym) ey(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
                 Real cut = (intery(i,j,k)-(problo[1]+j*dx[1]))*dyinv;
                 bcy += cut;
                 lym = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
@@ -661,6 +696,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lyp = 0.0_rt;
             } else {
                 ++ncuts;
+                amrex::PrintToFile("ncuts++") << "(lyp) ey(i+1,j,k) index: (i+1,j,k) = (" << i+1 << "," << j << "," << k << ")  \n";
                 Real cut = (intery(i+1,j,k)-(problo[1]+j*dx[1]))*dyinv;
                 bcx += 1.0_rt;
                 bcy += cut;
@@ -669,6 +705,11 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+                amrex::Print() << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                amrex::Print() << "zbx =" <<  amrex::grow(amrex::surroundingNodes(bx,2),1) << "\n";
+
+                // ct_zbx_bad += 1;
+                // amrex::Print() << "count zbx bad = " << ct_zbx_bad << "\n";
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lym <= small && lyp <= small)) {
@@ -701,7 +742,14 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
         }
     });
 
+    amrex::Print() << "*hp after zbx = " << *hp << "\n";
+    if (*hp > 0)
+    {
+        amrex::Print() << "zbx bad " << "\n";
+    }
+
     const Box& bxg1 = amrex::grow(bx,1);
+    // EY for covered/regular cells only
     AMREX_HOST_DEVICE_FOR_3D ( bxg1, i, j, k,
     {
         if (cell(i,j,k).isSingleValued()) {
@@ -724,6 +772,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     if (*hp > 0) {
         if (cover_multiple_cuts) {
+            amrex::Print() << "We cover multiple cuts?  " << "\n"; 
             Box const& nbxg1 = amrex::surroundingNodes(bxg1);
             AMREX_HOST_DEVICE_FOR_3D(nbxg1, i, j, k,
             {
@@ -757,12 +806,22 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                         levset(i,j,k) = Real(0.0);
                     }
                 }
+                else {
+                    amrex::Print() << "i = " << i << "\n";
+                }
             });
         } else {
+            // amrex::PrintToFile("box_zoom") << "xbx =" <<  amrex::grow(amrex::surroundingNodes(bx,0),1) << "\n";
+            // amrex::PrintToFile("box_zoom") << "ybx =" <<  amrex::grow(amrex::surroundingNodes(bx,1),1) << "\n";
+            // amrex::PrintToFile("box_zoom") << "zbx =" <<  amrex::grow(amrex::surroundingNodes(bx,2),1) << "\n";
+            // amrex::PrintToFile("box_zoom") << "nbxg1 =" <<  amrex::surroundingNodes(bxg1) << "\n";
+            // amrex::PrintToFile("box_zoom") << "dx = " <<  dx[0] << "\n";
+
+            amrex::Print() << "HERE: we are about to abort - EB2_3D_C.cpp" << "\n";
+            amrex::Print() << "*hp = " << *hp << "\n";
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }
-
     return *hp;
 }
 

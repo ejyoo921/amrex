@@ -1,6 +1,9 @@
 
 AMREX_HOME := $(shell pwd)
+
+# EY
 INCLUDE_LOCATIONS += /usr/local/opt/cgal/lib/cmake/CGAL/
+USE_MPI   = FALSE
 
 include $(AMREX_HOME)/Tools/GNUMake/Make.defs
 

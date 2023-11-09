@@ -227,7 +227,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                     cut_boxes.push_back(amrex::refine(vbx, crse_ratio));
                 }
             }
-
+            amrex::PrintToFile("box_zoom") << "Cut-boxes: " <<  cut_boxes << "\n";
             amrex::AllGatherBoxes(cut_boxes.data());
         }
     }
@@ -413,9 +413,18 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& ym2 = M2[1].array();
                 Array4<Real> const& zm2 = M2[2].array();
 
+                amrex::Print() << "HERE-Level" << "\n"; // EY
+                // amrex::PrintToFile("box_zoom") << "vbx = " << vbx << "\n";
+                // amrex::PrintToFile("box_zoom") << "cfg = " << cfg << "\n";
+                // amrex::PrintToFile("box_zoom") << "ftx = " << ftx << "\n";
+                // amrex::PrintToFile("box_zoom") << "fty = " << fty << "\n";
+                // amrex::PrintToFile("box_zoom") << "ftz = " << ftz << "\n";
+
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
                                   xm2, ym2, zm2, dx, problo, cover_multiple_cuts);
+
+                amrex::Print() << "HERE-after build faces" << "\n"; // EY
 
                 cellflagtmp.resize(m_cellflag[mfi].box());
                 Elixir cellflagtmp_eli = cellflagtmp.elixir();
