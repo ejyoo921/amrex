@@ -22,12 +22,18 @@ typedef K::FT FT;
 typedef K::Point_3 Point;
 typedef K::Vector_3 Vector;
 typedef K::Ray_3 Ray;
+typedef K::Triangle_3 Tri;
 
+// The following has a conflict with AABB_face_graph_triangle_primitive
 typedef CGAL::Surface_mesh<Point> Mesh;
 typedef boost::graph_traits<Mesh>::face_descriptor face_descriptor;
 typedef boost::graph_traits<Mesh>::halfedge_descriptor halfedge_descriptor;
 
 typedef CGAL::AABB_face_graph_triangle_primitive<Mesh> Primitive;
+
+typedef CGAL::AABB_traits<K, Primitive> Traits;
+typedef CGAL::AABB_tree<Traits> Tree;
+typedef boost::optional<Tree::Intersection_and_primitive_id<Ray>::Type> Ray_intersection;
 
 namespace amrex
 {
@@ -263,27 +269,27 @@ STLtools::read_ascii_stl_file (std::string const& fname, Real scale,
 }
 
 // EY: From Hari's code -- from CGAL -- require the installation.
-Real STLtools::getSignedDistance(Real x,Real y,Real z)
-{
+// Real STLtools::getSignedDistance(Real x,Real y,Real z)
+// {
 
-    Real sign,dist;
-    int num_intersects=0;
+//     Real sign,dist;
+//     int num_intersects=0;
 
-    Point crd(x,y,z);
+//     Point crd(x,y,z);
 
-    //FIXME: get a point outside from user
-    Point point_outside(m_outpx,m_outpy,m_outpz);
-    Segment out_to_coord(point_outside,crd);
-    num_intersects=(*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
+//     //FIXME: get a point outside from user
+//     Point point_outside(m_outpx,m_outpy,m_outpz);
+//     Segment out_to_coord(point_outside,crd);
+//     num_intersects=(*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
 
-    sign=(num_intersects%2==0)?1.0:-1.0;
+//     sign=(num_intersects%2==0)?1.0:-1.0;
 
-    Point closest_point = (*m_aabb_tree).closest_point(crd);
-    FT sqd = (*m_aabb_tree).squared_distance(crd);
-    dist = std::sqrt(sqd)*sign;
+//     Point closest_point = (*m_aabb_tree).closest_point(crd);
+//     FT sqd = (*m_aabb_tree).squared_distance(crd);
+//     dist = std::sqrt(sqd)*sign;
 
-    return(dist);
-}
+//     return(dist);
+// }
 
 
 
@@ -492,6 +498,9 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     amrex::Print() << "reference_value = " << reference_value << "\n";
     amrex::Print() << "other_value = " << other_value << "\n";
 
+    // EY: Preparation for CGAL 
+    Mesh mesh;
+    // Tree tree(faces(mesh).first, faces(mesh).second, mesh);
 
     auto const& ma = mf.arrays();
     // EY: Timing the loop
