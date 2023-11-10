@@ -3,6 +3,32 @@
 #include <AMReX_IntConv.H>
 #include <cstring>
 
+// EY: Timing tool 
+#include <chrono>
+// EY: CGAL
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Polygon_mesh_processing/orientation.h>
+#include <iostream>
+#include <fstream>
+
+// EY: CGAL -- continued
+typedef CGAL::Simple_cartesian<double> K;
+typedef K::FT FT;
+typedef K::Point_3 Point;
+typedef K::Vector_3 Vector;
+typedef K::Ray_3 Ray;
+
+typedef CGAL::Surface_mesh<Point> Mesh;
+typedef boost::graph_traits<Mesh>::face_descriptor face_descriptor;
+typedef boost::graph_traits<Mesh>::halfedge_descriptor halfedge_descriptor;
+
+typedef CGAL::AABB_face_graph_triangle_primitive<Mesh> Primitive;
+
 namespace amrex
 {
 
@@ -461,9 +487,15 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
 
     Real reference_value = m_boundry_is_outside ? outside_value :  inside_value;
     Real other_value     = m_boundry_is_outside ?  inside_value : outside_value;
+    
+    // EY: checking point
+    amrex::Print() << "reference_value = " << reference_value << "\n";
+    amrex::Print() << "other_value = " << other_value << "\n";
+
 
     auto const& ma = mf.arrays();
-
+    // EY: Timing the loop
+    auto t0 = std::chrono::high_resolution_clock::now();
     ParallelFor(mf, nghost, [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) noexcept
     {
         Real coords[3];
@@ -482,6 +514,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
         {
             Real pr[]={ptref.x, ptref.y, ptref.z};
+            
             for (int tr=0; tr < num_triangles; ++tr) {
                 if (line_tri_intersects(pr, coords, tri_pts[tr])) {
                     ++num_intersects;
@@ -490,6 +523,10 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
         }
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto dt = 1.e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count();
+    amrex::Print() << "Time for line-tri-intersects = " << dt << "(s)" << "\n";
+
     Gpu::streamSynchronize();
 }
 
