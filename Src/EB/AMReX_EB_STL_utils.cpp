@@ -5,30 +5,13 @@
 
 // EY: Timing tool 
 #include <chrono>
+#include <bits/stdc++.h>
 
-// EY: CGAL --for--Ray-Shooting
-#include <CGAL/Simple_cartesian.h>
-#include <CGAL/Surface_mesh.h>
-#include <CGAL/AABB_tree.h>
-#include <CGAL/AABB_traits.h>
-#include <CGAL/AABB_face_graph_triangle_primitive.h>
-#include <CGAL/Polygon_mesh_processing/compute_normal.h>
-#include <CGAL/Polygon_mesh_processing/orientation.h>
+// EY: CGAL--
+// See .H file for more details
 #include <iostream>
-#include <fstream>
-
-typedef CGAL::Simple_cartesian<double> K;
-typedef K::FT FT;
-typedef K::Point_3 Point;
-typedef K::Vector_3 Vector3;
-typedef K::Ray_3 Ray;
-typedef CGAL::Surface_mesh<Point> Mesh;
-typedef boost::graph_traits<Mesh>::face_descriptor face_descriptor;
-typedef boost::graph_traits<Mesh>::halfedge_descriptor halfedge_descriptor;
-typedef CGAL::AABB_face_graph_triangle_primitive<Mesh> Primitive;
-typedef CGAL::AABB_traits<K, Primitive> Traits;
-typedef CGAL::AABB_tree<Traits> Tree;
-typedef boost::optional<Tree::Intersection_and_primitive_id<Ray>::Type> Ray_intersection;
+#include <system_error>
+#include <thread>
 
 namespace amrex
 {
@@ -264,27 +247,43 @@ STLtools::read_ascii_stl_file (std::string const& fname, Real scale,
 }
 
 // EY: From Hari's code -- from CGAL -- require the installation.
-// Real STLtools::getSignedDistance(Real x,Real y,Real z)
-// {
+Real STLtools::getSignedDistance(Real x,Real y,Real z) const
+{
 
-//     Real sign,dist;
-//     int num_intersects=0;
+    Real dist;
+    Real sign;
+    int num_intersects=0;
 
-//     Point crd(x,y,z);
+    Point crd(x,y,z);
 
-//     //FIXME: get a point outside from user
-//     Point point_outside(m_outpx,m_outpy,m_outpz);
-//     Segment out_to_coord(point_outside,crd);
-//     num_intersects=(*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
+    //FIXME: get a point outside from user
+    Point point_outside(m_outpx,m_outpy,m_outpz);
+    Segment out_to_coord(point_outside,crd);
+    num_intersects=(*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
 
-//     sign=(num_intersects%2==0)?1.0:-1.0;
+    sign=(num_intersects%2==0)?1.0:-1.0;
 
-//     Point closest_point = (*m_aabb_tree).closest_point(crd);
-//     FT sqd = (*m_aabb_tree).squared_distance(crd);
-//     dist = std::sqrt(sqd)*sign;
+    Point closest_point = (*m_aabb_tree).closest_point(crd);
+    FT sqd = (*m_aabb_tree).squared_distance(crd);
+    dist = std::sqrt(sqd)*sign;
 
-//     return(dist);
-// }
+    return(dist);
+}
+
+// EY: just get number of intersections
+Real STLtools::getNumIntersect(Real x,Real y,Real z, Real outpx, Real outpy, Real outpz) const
+{
+    std::thread thethread;
+    int num_intersects = 0;
+
+    Point crd(x,y,z);
+
+    Point point_outside(outpx,outpy,outpz);
+    Segment out_to_coord(point_outside,crd);
+    num_intersects = (*m_aabb_tree).number_of_intersected_primitives(out_to_coord);
+
+    return num_intersects;
+}
 
 
 
@@ -473,19 +472,7 @@ STLtools::prepare ()
 }
 
 // EY: For CGAL -- Ray shooting-- connected to STLtools::fill--see below
-struct Skip
-{
-  face_descriptor fd;
-  Skip(const face_descriptor fd)
-    : fd(fd)
-  {}
-  bool operator()(const face_descriptor& t) const
-  { if(t == fd){
-      std::cerr << "ignore " << t  <<std::endl;
-    };
-    return(t == fd);
-  }
-};
+
 
 void
 STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
@@ -501,6 +488,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     XDim3 ptmax = m_ptmax;
     XDim3 ptref = m_ptref;
 
+
     Real reference_value = m_boundry_is_outside ? outside_value :  inside_value;
     Real other_value     = m_boundry_is_outside ?  inside_value : outside_value;
     
@@ -508,10 +496,6 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     amrex::Print() << "reference_value = " << reference_value << "\n";
     amrex::Print() << "other_value = " << other_value << "\n";
 
-    // EY: Preparation for CGAL 
-    Mesh mesh;
-    Tree tree(faces(mesh).first, faces(mesh).second, mesh);
-    double d = CGAL::Polygon_mesh_processing::is_outward_oriented(mesh)?-1:1;
 
     auto const& ma = mf.arrays();
     // EY: Timing the loop
@@ -527,39 +511,24 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
 #else
         coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
-        int num_intersects=0;
-        // EY: Check the points only if they are near the bounding box
+        int num_intersects=0;        
+
         if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
             coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
         {
             Real pr[]={ptref.x, ptref.y, ptref.z};
-            
+
+            // EY: Use CGAL aabb tree 
+            num_intersects = (coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+            amrex::Print() << "number of intersections = " << ptref.x << "\n";
+
             // for (int tr=0; tr < num_triangles; ++tr) {
             //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
             //         ++num_intersects;
             //     }
             // }
 
-                for(face_descriptor fd : faces(mesh))
-                {
-                    amrex::Print() << "Using CGAL Ray-Shooting" << "\n";
-                    halfedge_descriptor hd = halfedge(fd,mesh);
-                    Point p = CGAL::centroid(mesh.point(source(hd,mesh)),
-                                            mesh.point(target(hd,mesh)),
-                                            mesh.point(target(next(hd,mesh),mesh)));
-                    Vector3 v = CGAL::Polygon_mesh_processing::compute_face_normal(fd,mesh);
-                    Ray ray(p,d * v);
-                    Skip skip(fd);
-                    Ray_intersection hit = tree.any_intersection(ray, skip);
-                    // if(intersection)
-                    // {
-                    // if(boost::get<Point>(&(intersection->first))){
-                    //     const Point* p =  boost::get<Point>(&(intersection->first) );
-                    //     std::cout <<  *p << std::endl;
-                    // }
-                    // }
-                }
         }
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });

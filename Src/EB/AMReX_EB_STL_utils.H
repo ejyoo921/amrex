@@ -15,23 +15,26 @@
 #include <AMReX_FArrayBox.H>
 #include <AMReX_Box.H>
 
-// #include <CGAL/Simple_cartesian.h>
-// #include <CGAL/AABB_tree.h>
-// #include <CGAL/AABB_traits.h>
-// #include <CGAL/AABB_triangle_primitive.h>
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_triangle_primitive.h>
 
-// typedef CGAL::Simple_cartesian<double> K;
-// typedef K::FT FT;
-// typedef K::Ray_3 Ray;
-// typedef K::Line_3 Line;
-// typedef K::Segment_3 Segment;
-// typedef K::Point_3 Point;
-// typedef K::Triangle_3 Triangle;
-// typedef std::list<Triangle>::iterator Iterator;
-// typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
-// typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
-// typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
-// typedef Tree::Point_and_primitive_id Point_and_primitive_id;
+typedef CGAL::Simple_cartesian<double> K;
+typedef K::FT FT;
+typedef K::Ray_3 Ray;
+typedef K::Line_3 Line;
+typedef K::Segment_3 Segment;
+typedef K::Point_3 Point;
+typedef K::Triangle_3 Triangle;
+
+using namespace std;
+typedef std::list<Triangle>::iterator Iterator;
+typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
+typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
+typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+typedef Tree::Point_and_primitive_id Point_and_primitive_id;
+
 
 namespace amrex
 {
@@ -67,11 +70,11 @@ private:
 
 
     // EY from Hari for CGAL
-        //host vectors
-    // Gpu::PinnedVector<Real> m_tri_normals_h;
+    // //host vectors
+    Gpu::PinnedVector<Real> m_tri_normals_h;
 
     // //device vectors
-    // // Gpu::DeviceVector<amrex::Real> m_tri_normals_d;
+    // Gpu::DeviceVector<amrex::Real> m_tri_normals_d;
 
     // int  m_ndata_per_tri=9;    //three points x 3 coordinates
     // int  m_ndata_per_normal=3; //three components
@@ -79,19 +82,22 @@ private:
     // Real m_inside  = -1.0;
     // Real m_outside =  1.0;
 
-    // std::list<Triangle> m_triangles;
-    // Tree *m_aabb_tree;
+    std::list<Triangle> m_triangles;
+    Tree *m_aabb_tree;
 
-    // Real m_outpx = 1e5;
-    // Real m_outpy = 1e5;
-    // Real m_outpz = 1e5;
+    Real m_outpx = 1e5;
+    Real m_outpy = 1e5;
+    Real m_outpz = 1e5;
 
 public:
 
     void prepare ();  // public for cuda
 
     // EY from Hari
-    Real getSignedDistance(Real x,Real y,Real z);
+    Real getSignedDistance(Real x, Real y, Real z) const;
+    Real getNumIntersect(Real x, Real y, Real z, Real outpx, Real outpy, Real outpz) const;
+
+
 
     void read_stl_file (std::string const& fname, Real scale, Array<Real,3> const& center,
                         int reverse_normal);
