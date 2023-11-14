@@ -5,7 +5,7 @@
 
 // EY: Timing tool 
 #include <chrono>
-#include <bits/stdc++.h>
+// #include <bits/stdc++.h>
 
 // EY: CGAL--
 // See .H file for more details
@@ -520,8 +520,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             Real pr[]={ptref.x, ptref.y, ptref.z};
 
             // EY: Use CGAL aabb tree 
-            num_intersects = (coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
-            amrex::Print() << "number of intersections = " << ptref.x << "\n";
+            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
 
             // for (int tr=0; tr < num_triangles; ++tr) {
             //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
@@ -530,6 +529,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             // }
 
         }
+        // amrex::Print() << "number of intersections = " << num_intersects << "\n";
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });
     auto t1 = std::chrono::high_resolution_clock::now();
