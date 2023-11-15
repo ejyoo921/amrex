@@ -540,7 +540,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             Real pr[]={ptref.x, ptref.y, ptref.z};
 
             // EY: Use CGAL aabb tree 
-            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], 1e5, 1e5, 1e5);
 
             // for (int tr=0; tr < num_triangles; ++tr) {
             //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
