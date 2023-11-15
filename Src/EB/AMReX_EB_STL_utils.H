@@ -26,10 +26,10 @@ typedef K::Ray_3 Ray;
 typedef K::Line_3 Line;
 typedef K::Segment_3 Segment;
 typedef K::Point_3 Point;
-typedef K::Triangle_3 Triangle;
+typedef K::Triangle_3 TriangleC;
 
-using namespace std;
-typedef std::list<Triangle>::iterator Iterator;
+// using namespace std;
+typedef std::list<TriangleC>::iterator Iterator;
 typedef CGAL::AABB_triangle_primitive<K, Iterator> Primitive;
 typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
@@ -82,7 +82,8 @@ private:
     // Real m_inside  = -1.0;
     // Real m_outside =  1.0;
 
-    std::list<Triangle> m_triangles;
+    int  m_ndata_per_tri = 9;    //three points x 3 coordinates
+    std::list<TriangleC> m_triangles;
     Tree *m_aabb_tree;
 
     Real m_outpx = 1e5;

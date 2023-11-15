@@ -306,6 +306,26 @@ STLtools::prepare ()
     Triangle const* tri_pts = m_tri_pts_d.data();
     XDim3* tri_norm = m_tri_normals_d.data();
 
+    // EY: Make a list of Triangles
+    m_triangles.clear();
+    for(int tr=0;tr<m_num_tri;tr++)
+    {
+        Point a(m_tri_pts_h[tr*m_ndata_per_tri+0].v1.x,
+                m_tri_pts_h[tr*m_ndata_per_tri+1].v1.y,
+                m_tri_pts_h[tr*m_ndata_per_tri+2].v1.z);
+
+        Point b(m_tri_pts_h[tr*m_ndata_per_tri+3].v2.x,
+                m_tri_pts_h[tr*m_ndata_per_tri+4].v2.y,
+                m_tri_pts_h[tr*m_ndata_per_tri+5].v2.z);
+
+        Point c(m_tri_pts_h[tr*m_ndata_per_tri+6].v3.x,
+                m_tri_pts_h[tr*m_ndata_per_tri+7].v3.y,
+                m_tri_pts_h[tr*m_ndata_per_tri+8].v3.z);
+
+        m_triangles.push_back(TriangleC(a,b,c));
+    }
+    m_aabb_tree = new Tree(m_triangles.begin(),m_triangles.end());
+
     // Compute normals in case the STL file does not have valid data for normals
     ParallelFor(m_num_tri, [=] AMREX_GPU_DEVICE (int i) noexcept
     {
