@@ -5,7 +5,6 @@
 
 // EY: Timing tool 
 #include <chrono>
-// #include <bits/stdc++.h>
 
 // EY: CGAL--
 // See .H file for more details
