@@ -533,7 +533,7 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             // EY: Use CGAL aabb tree 
             num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
             
-            // Original line search for ALL triangle
+            // // //Original line search for ALL triangle
             // for (int tr=0; tr < num_triangles; ++tr) {
             //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
             //         ++num_intersects;
@@ -544,9 +544,9 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
         // amrex::Print() << "number of intersections = " << num_intersects << "\n";
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });
-    auto t1 = std::chrono::high_resolution_clock::now();
-    auto dt = 1.e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count();
-    amrex::Print() << "Time for line-tri-intersects = " << dt << "(s)" << "\n";
+    // auto t1 = std::chrono::high_resolution_clock::now();
+    // auto dt = 1.e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count();
+    // amrex::Print() << "Time for line-tri-intersects = " << dt << "(s)" << "\n";
 
     Gpu::streamSynchronize();
 }
@@ -589,6 +589,9 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
         XDim3 ptref = m_ptref;
         int ref_value = m_boundry_is_outside ? 1 : 0;
 
+        // EY: Timing for line-search
+        // auto t0 = std::chrono::high_resolution_clock::now();  
+
         ReduceOps<ReduceOpSum> reduce_op;
         ReduceData<int> reduce_data(reduce_op);
         using ReduceTuple = typename decltype(reduce_data)::Type;
@@ -604,21 +607,28 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
 #else
             coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
-            int num_intersects=0;
+            int num_intersects=0; 
             if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
                 coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
                 coords[2] >= ptmin.z && coords[2] <= ptmax.z)
             {
                 Real pr[]={ptref.x, ptref.y, ptref.z};
-                for (int tr=0; tr < num_triangles; ++tr) {
-                    if (line_tri_intersects(pr, coords, tri_pts[tr])) {
-                        ++num_intersects;
-                    }
-                }
-            }
 
+                // EY: Use CGAL aabb tree 
+                num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+
+                // EY: replace this with CGAL
+                // for (int tr=0; tr < num_triangles; ++tr) {
+                //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
+                //         ++num_intersects;
+                //     }
+                // } 
+            }
             return (num_intersects % 2 == 0) ? ref_value : 1-ref_value;
         });
+        // auto t1 = std::chrono::high_resolution_clock::now();
+        // auto dt = 1.e-9*std::chrono::duration_cast<std::chrono::nanoseconds>(t1-t0).count();
+        // amrex::Print() << "Time for line-tri-intersects = " << dt << "(s)" << "\n";
 
         ReduceTuple hv = reduce_data.value(reduce_op);
         Long nfluid = static_cast<Long>(amrex::get<0>(hv));
@@ -636,7 +646,7 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
 
 void
 STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box const&) const
-{
+{   
     int num_triangles = m_num_tri;
 
     const auto plo = geom.ProbLoArray();
@@ -667,11 +677,14 @@ STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box con
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
         {
             Real pr[]={ptref.x, ptref.y, ptref.z};
-            for (int tr=0; tr < num_triangles; ++tr) {
-                if (line_tri_intersects(pr, coords, tri_pts[tr])) {
-                    ++num_intersects;
-                }
-            }
+            // EY: Use CGAL aabb tree 
+            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+
+            // for (int tr=0; tr < num_triangles; ++tr) {
+            //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
+            //         ++num_intersects;
+            //     }
+            // }
         }
         a(i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });

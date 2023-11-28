@@ -163,7 +163,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
 
 #ifdef AMREX_USE_FLOAT
     Real small_volfrac = 1.e-5_rt;
-#else
+#else   
     Real small_volfrac = 1.e-14;
 #endif
     bool cover_multiple_cuts = false;
@@ -414,11 +414,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& zm2 = M2[2].array();
 
                 amrex::Print() << "HERE-Level" << "\n"; // EY
-                // amrex::PrintToFile("box_zoom") << "vbx = " << vbx << "\n";
-                // amrex::PrintToFile("box_zoom") << "cfg = " << cfg << "\n";
-                // amrex::PrintToFile("box_zoom") << "ftx = " << ftx << "\n";
-                // amrex::PrintToFile("box_zoom") << "fty = " << fty << "\n";
-                // amrex::PrintToFile("box_zoom") << "ftz = " << ftz << "\n";
 
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,

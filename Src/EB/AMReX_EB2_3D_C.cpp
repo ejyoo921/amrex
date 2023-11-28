@@ -706,8 +706,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 amrex::Print() << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
-                amrex::Print() << "zbx =" <<  amrex::grow(amrex::surroundingNodes(bx,2),1) << "\n";
-
                 // ct_zbx_bad += 1;
                 // amrex::Print() << "count zbx bad = " << ct_zbx_bad << "\n";
             }
@@ -811,12 +809,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 }
             });
         } else {
-            // amrex::PrintToFile("box_zoom") << "xbx =" <<  amrex::grow(amrex::surroundingNodes(bx,0),1) << "\n";
-            // amrex::PrintToFile("box_zoom") << "ybx =" <<  amrex::grow(amrex::surroundingNodes(bx,1),1) << "\n";
-            // amrex::PrintToFile("box_zoom") << "zbx =" <<  amrex::grow(amrex::surroundingNodes(bx,2),1) << "\n";
-            // amrex::PrintToFile("box_zoom") << "nbxg1 =" <<  amrex::surroundingNodes(bxg1) << "\n";
-            // amrex::PrintToFile("box_zoom") << "dx = " <<  dx[0] << "\n";
-
             amrex::Print() << "HERE: we are about to abort - EB2_3D_C.cpp" << "\n";
             amrex::Print() << "*hp = " << *hp << "\n";
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
