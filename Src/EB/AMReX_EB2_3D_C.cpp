@@ -413,6 +413,13 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 bcy  += cut;
                 lym = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
                 lym = amrex::min(amrex::max(Real(0.0),lym),Real(1.0));
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[xbx] adding cuts on lym" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[1] << "\n"; 
+                }
             }
 
             Real lyp;
@@ -427,6 +434,13 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 bcz += 1.0_rt;
                 lyp = (levset(i,j,k+1) < 0.0_rt) ? cut : 1.0_rt-cut;
                 lyp = amrex::min(amrex::max(Real(0.0),lyp),Real(1.0));
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[xbx] adding cuts on lyp" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[1] << "\n"; 
+                }
             }
 
             Real lzm;
@@ -440,6 +454,13 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 bcz += cut;
                 lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
                 lzm = amrex::min(amrex::max(Real(0.0),lzm),Real(1.0));
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[xbx] adding cuts on lzm" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[2] << "\n"; 
+                }
             }
 
             Real lzp;
@@ -450,25 +471,24 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             } else {
                 ++ncuts;
                 Real cut = (interz(i,j+1,k)-(problo[2]+k*dx[2]))*dzinv;
-    
                 bcy += 1.0_rt;
                 bcz += cut;
                 lzp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
-                // if (i == 1 && j == -1 && k == -1)
-                // {
-                //     amrex::Print() << "interz(i,j+1,k) = " << interz(i,j+1,k) << "\n";
-                //     amrex::Print() << "problo[2] = " << problo[2] << "\n";
-                //     amrex::Print() << "dz = " << dx[2] << "\n";      
-                //     amrex::Print() << "cut = " << cut << "\n";
-                //     amrex::Print() << "bcy = " << bcy << "\n";   
-                //     amrex::Print() << "levset(i,j+1,k) = " << levset(i,j+1,k) << "\n";  
-                //     amrex::Print() << "lzp = " << lzp << "\n";                        
-                // }
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[xbx] adding cuts on lzp" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[2] << "\n"; 
+                }
             }
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+                // amrex::Print() << "xbx = " << xbx << "\n";
+                amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
+                amrex::Print() << "fx(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                amrex::Print() << "Let's go back to locate cuts" << "\n";
             }
 
             if ((ncuts > 2) || (lym <= small && lyp <= small && lzm <= small && lzp <= small)) {
@@ -503,10 +523,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     
     amrex::Print() << "*hp after xbx = " << *hp << "\n";
-    if (*hp > 0)
-    {
-        amrex::Print() << "ybx bad " << "\n";
-    }
     
     const Box& ybx = amrex::grow(amrex::surroundingNodes(bx,1),1);
     AMREX_HOST_DEVICE_FOR_3D ( ybx, i, j, k,
@@ -566,7 +582,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 ++ncuts;
                 Real cut = (interz(i,j,k)-(problo[2]+k*dx[2]))*dzinv;
                 bcz += cut;
-                lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut; // EY: checking the direction to get to the cut point
             }
 
             Real lzp;
@@ -584,6 +600,96 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+                // amrex::Print() << "ybx = " << ybx << "\n";
+                amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
+                amrex::Print() << "fy(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                amrex::Print() << "Let's go back to locate cuts" << "\n";
+
+                int ncuts = 0;
+                Real bcx = 0.0_rt;
+                Real bcz = 0.0_rt;
+
+                Real lxm;
+                if (ex(i,j,k) == Type::regular) {
+                    lxm = 1.0_rt;
+                } else if (ex(i,j,k) == Type::covered) {
+                    lxm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j,k)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    lxm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxm = amrex::min(amrex::max(Real(0.0),lxm),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    if (ncuts > 0){
+                        amrex::Print() << "[ybx] adding cuts on lxm" << "\n"; 
+                        amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                        amrex::Print() << "cut length = " << cut*dx[0] << "\n"; 
+                    }
+                }
+
+                Real lxp;
+                if (ex(i,j,k+1) == Type::regular) {
+                    lxp = 1.0_rt;
+                } else if (ex(i,j,k+1) == Type::covered) {
+                    lxp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j,k+1)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    bcz += 1.0_rt;
+                    lxp = (levset(i,j,k+1) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxp = amrex::min(amrex::max(Real(0.0),lxp),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    if (ncuts > 0){
+                        amrex::Print() << "[ybx] adding cuts on lxp" << "\n"; 
+                        amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                        amrex::Print() << "cut length = " << cut*dx[0] << "\n"; 
+                    }
+                }
+
+                Real lzm;
+                if (ez(i,j,k) == Type::regular) {
+                    lzm = 1.0_rt;
+                } else if (ez(i,j,k) == Type::covered) {
+                    lzm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i,j,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcz += cut;
+                    lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut; // EY: checking the direction to get to the cut point
+
+                    // EY: when do we get multi-cuts?
+                    if (ncuts > 0){
+                        amrex::Print() << "[ybx] adding cuts on lzm" << "\n"; 
+                        amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                        amrex::Print() << "cut length = " << cut*dx[2] << "\n"; 
+                        amrex::Print() << "cut physical point = " << problo[2]+lzm*dx[2] << "\n"; 
+                    }
+                }
+
+                Real lzp;
+                if (ez(i+1,j,k) == Type::regular) {
+                    lzp = 1.0_rt;
+                } else if (ez(i+1,j,k) == Type::covered) {
+                    lzp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i+1,j,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcx += 1.0_rt;
+                    bcz += cut;
+                    lzp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                    // EY: when do we get multi-cuts?
+                    if (ncuts > 0){
+                        amrex::Print() << "[ybx] adding cuts on lzp" << "\n"; 
+                        amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                        amrex::Print() << "cut length = " << cut*dx[2] << "\n"; 
+                        amrex::Print() << "cut physical point = " << problo[2]+lzp*dx[2] << "\n"; 
+                    }
+                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lzm <= small && lzp <= small)) {
@@ -617,11 +723,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     });
     
     amrex::Print() << "*hp after ybx = " << *hp << "\n";
+ 
 
-    if (*hp > 0)
-    {
-        amrex::Print() << "ybx bad " << "\n";
-    }
 
     // EY : count bad ones
     int ct_zbx_bad = 0; 
@@ -654,11 +757,17 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lxm = 0.0_rt;
             } else {
                 ++ncuts;
-                amrex::PrintToFile("ncuts++") << "(lxm) ex(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
                 Real cut = (interx(i,j,k)-(problo[0]+i*dx[0]))*dxinv;
                 bcx += cut;
                 lxm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
                 lxm = amrex::min(amrex::max(Real(0.0),lxm),Real(1.0));
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[zbx] adding cuts on lxm" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[0] << "\n"; 
+                }
             }
 
             Real lxp;
@@ -668,12 +777,18 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lxp = 0.0_rt;
             } else {
                 ++ncuts;
-                amrex::PrintToFile("ncuts++") << "(lxp) ex(i,j+1,k) index: (i,j+1,k) = (" << i << "," << j+1 << "," << k << ")  \n";
                 Real cut = (interx(i,j+1,k)-(problo[0]+i*dx[0]))*dxinv;
                 bcx += cut;
                 bcy += 1.0_rt;
                 lxp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
                 lxp = amrex::min(amrex::max(Real(0.0),lxp),Real(1.0));
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[zbx] adding cuts on lxp" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[0] << "\n"; 
+                }
             }
 
             Real lym;
@@ -683,10 +798,16 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lym = 0.0_rt;
             } else {
                 ++ncuts;
-                amrex::PrintToFile("ncuts++") << "(lym) ey(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
                 Real cut = (intery(i,j,k)-(problo[1]+j*dx[1]))*dyinv;
                 bcy += cut;
                 lym = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[zbx] adding cuts on lym" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[1] << "\n"; 
+                }
             }
 
             Real lyp;
@@ -696,18 +817,25 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 lyp = 0.0_rt;
             } else {
                 ++ncuts;
-                amrex::PrintToFile("ncuts++") << "(lyp) ey(i+1,j,k) index: (i+1,j,k) = (" << i+1 << "," << j << "," << k << ")  \n";
                 Real cut = (intery(i+1,j,k)-(problo[1]+j*dx[1]))*dyinv;
                 bcx += 1.0_rt;
                 bcy += cut;
                 lyp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                // EY: when do we get multi-cuts?
+                if (ncuts > 2){
+                    amrex::Print() << "[zbx] adding cuts on lyp" << "\n"; 
+                    amrex::Print() << "sum of ncut = " << ncuts << "\n"; 
+                    amrex::Print() << "cut length = " << cut*dx[1] << "\n"; 
+                }
             }
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+                amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
+                // amrex::Print() << "zbx = " << zbx << "\n";
                 amrex::Print() << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
-                // ct_zbx_bad += 1;
-                // amrex::Print() << "count zbx bad = " << ct_zbx_bad << "\n";
+                amrex::Print() << "Let's go back to locate cuts" << "\n";
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lym <= small && lyp <= small)) {
@@ -741,10 +869,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     });
 
     amrex::Print() << "*hp after zbx = " << *hp << "\n";
-    if (*hp > 0)
-    {
-        amrex::Print() << "zbx bad " << "\n";
-    }
 
     const Box& bxg1 = amrex::grow(bx,1);
     // EY for covered/regular cells only
@@ -770,7 +894,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     if (*hp > 0) {
         if (cover_multiple_cuts) {
-            amrex::Print() << "We cover multiple cuts?  " << "\n"; 
+            amrex::Print() << "You chose to cover multiple cuts " << "\n"; 
             Box const& nbxg1 = amrex::surroundingNodes(bxg1);
             AMREX_HOST_DEVICE_FOR_3D(nbxg1, i, j, k,
             {
@@ -809,8 +933,10 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 }
             });
         } else {
+            // EY:
             amrex::Print() << "HERE: we are about to abort - EB2_3D_C.cpp" << "\n";
-            amrex::Print() << "*hp = " << *hp << "\n";
+            amrex::Print() << "Total *hp = " << *hp << "\n";
+
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }
