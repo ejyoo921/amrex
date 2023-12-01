@@ -702,7 +702,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
                     // EY: when do we get multi-cuts?
                     amrex::PrintToFile("data_multicut_ybx")  << "cut # on lxm = " << ncuts << "\n"; 
-                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+lxm*dx[0] <<"," << problo[2] << ") \n"; 
+                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+lxm*dx[0] <<"," << problo[2]+(k)*dx[2] << ") \n"; 
                 }
 
                 Real lxp;
