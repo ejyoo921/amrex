@@ -660,6 +660,8 @@ STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box con
     Real other_value     = m_boundry_is_outside ?  1.0_rt : -1.0_rt;
 
     auto const& a = levelset.array();
+    // EY: check getSingedDist
+    auto const& a2 = levelset.array();
     const Box& bx = levelset.box();
     ParallelFor(bx, [=] AMREX_GPU_DEVICE (int i, int j, int k) noexcept
     {
@@ -671,7 +673,8 @@ STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box con
 #else
         coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
-        int num_intersects=0;
+        int num_intersects = 0;
+        Real signed_dist = 0;
         if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
             coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
@@ -680,6 +683,8 @@ STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box con
             // EY: Use CGAL aabb tree 
             num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
 
+            signed_dist = getSignedDistance(coords[0], coords[1], coords[2]);
+
             // for (int tr=0; tr < num_triangles; ++tr) {
             //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
             //         ++num_intersects;
@@ -687,6 +692,7 @@ STLtools::fillFab (BaseFab<Real>& levelset, const Geometry& geom, RunOn, Box con
             // }
         }
         a(i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
+        a2(i,j,k) = signed_dist;
     });
 }
 
