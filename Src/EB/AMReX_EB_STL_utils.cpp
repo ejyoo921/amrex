@@ -322,7 +322,6 @@ STLtools::prepare ()
         tri_norm[i].z = norm.z * tmp;
 
         // EY: Make a list of TriangleC
-    
         Point a(tri.v1.x, tri.v1.y, tri.v1.z);
         Point b(tri.v2.x, tri.v2.y, tri.v2.z);
         Point c(tri.v3.x, tri.v3.y, tri.v3.z);

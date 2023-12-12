@@ -37,6 +37,9 @@ public:
     bool isOK () const noexcept { return m_ok; }
     void fillEBCellFlag (FabArray<EBCellFlagFab>& cellflag, const Geometry& geom) const;
     void fillVolFrac (MultiFab& vfrac, const Geometry& geom) const;
+    // EY
+    void fillVolMultiCut (MultiFab& vmulticut, const Geometry& geom) const;
+
     void fillCentroid (MultiCutFab& centroid, const Geometry& geom) const;
     void fillCentroid (   MultiFab& centroid, const Geometry& geom) const;
     void fillBndryArea (MultiCutFab& bndryarea, const Geometry& geom) const;
@@ -85,6 +88,9 @@ protected:
     MultiFab m_levelset;
     FabArray<EBCellFlagFab> m_cellflag;
     MultiFab m_volfrac;
+    // EYL
+    MultiFab m_flag_multicut;
+
     MultiFab m_centroid;
     MultiFab m_bndryarea;
     MultiFab m_bndrycent;
@@ -286,6 +292,8 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     mf_info.SetTag("EB2::Level");
     m_cellflag.define(m_grids, m_dmap, 1, ng, mf_info);
     m_volfrac.define(m_grids, m_dmap, 1, ng, mf_info);
+    //EY: for multicuts
+    m_flag_multicut.define(m_grids, m_dmap, 1, ng, mf_info);
     m_centroid.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndryarea.define(m_grids, m_dmap, 1, ng, mf_info);
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
@@ -350,6 +358,8 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real      > const&  lst = levelset.array();
                 Array4<EBCellFlag> const& cfg = m_cellflag.array(mfi);
                 Array4<Real> const& vfr = m_volfrac.array(mfi);
+                // EY: for multi cut
+                Array4<Real> const& flgcuts = m_flag_multicut.array(mfi);
                 Array4<Real> const& ctr = m_centroid.array(mfi);
                 Array4<Real> const& bar = m_bndryarea.array(mfi);
                 Array4<Real> const& bct = m_bndrycent.array(mfi);
@@ -417,7 +427,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
 
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
-                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts);
+                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts,vfr);
 
                 amrex::Print() << "HERE-after build faces" << "\n"; // EY
 
@@ -483,6 +493,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         }
 
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
+        //EY: testing in progress 
         if (nsmallcells == 0 && nmulticuts == 0) {
             break;
         } else {

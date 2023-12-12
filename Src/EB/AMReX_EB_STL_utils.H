@@ -94,7 +94,7 @@ public:
 
     void prepare ();  // public for cuda
 
-    // EY from Hari
+    // EY from Hari (CGAL)
     Real getSignedDistance(Real x, Real y, Real z) const;
     Real getNumIntersect(Real x, Real y, Real z, Real outpx, Real outpy, Real outpz) const;
 

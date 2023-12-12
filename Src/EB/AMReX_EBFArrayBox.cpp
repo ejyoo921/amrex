@@ -59,6 +59,18 @@ EBFArrayBox::getVolFracData () const
     }
 }
 
+// EY
+const FArrayBox*
+EBFArrayBox::getMultiCutsData () const
+{
+    if (m_factory && m_box_index >= 0) {
+        MultiFab const& mf = m_factory->getMultiCuts();
+        return &(mf[m_box_index]);
+    } else {
+        return nullptr;
+    }
+}
+
 const FArrayBox*
 EBFArrayBox::getCentroidData () const
 {

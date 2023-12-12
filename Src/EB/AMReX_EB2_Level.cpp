@@ -53,6 +53,10 @@ Level::prepareForCoarsening (const Level& rhs, int max_grid_size, IntVect const&
     m_volfrac.define(m_grids, m_dmap, 1, ng);
     rhs.fillVolFrac(m_volfrac, m_geom);
 
+    //EY: multicut flag
+    m_flag_multicut.define(m_grids, m_dmap, 1, ng);
+    rhs.fillVolMultiCut(m_flag_multicut, m_geom);
+
     m_centroid.define(m_grids, m_dmap, AMREX_SPACEDIM, ng);
     rhs.fillCentroid(m_centroid, m_geom);
 
@@ -167,6 +171,9 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
     const int ng = 2;
     m_cellflag.define(m_grids, m_dmap, 1, ng);
     m_volfrac.define(m_grids, m_dmap, 1, ng);
+    //EY
+    m_flag_multicut.define(m_grids, m_dmap, 1, ng);
+
     m_centroid.define(m_grids, m_dmap, AMREX_SPACEDIM, ng);
     m_bndryarea.define(m_grids, m_dmap, 1, ng);
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng);
@@ -182,6 +189,9 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
 
     auto& f_cellflag = fineLevel.m_cellflag;
     MultiFab& f_volfrac = fineLevel.m_volfrac;
+    //EY:multi-cut flag
+    MultiFab& f_volmulti = fineLevel.m_flag_multicut;
+    
     MultiFab& f_centroid = fineLevel.m_centroid;
     MultiFab& f_bndryarea = fineLevel.m_bndryarea;
     MultiFab& f_bndrycent = fineLevel.m_bndrycent;
@@ -196,6 +206,9 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
         const auto& fine_period = fine_geom.periodicity();
         f_cellflag.FillBoundary(fine_period);
         f_volfrac.FillBoundary(fine_period);
+        //EY:
+        f_volmulti.FillBoundary(fine_period);
+
         f_centroid.FillBoundary(fine_period);
         f_bndryarea.FillBoundary(fine_period);
         f_bndrycent.FillBoundary(fine_period);
@@ -218,7 +231,10 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
                 for (MFIter mfi(f_volfrac); mfi.isValid(); ++mfi)
                 {
                     const Box& bx = mfi.fabbox();
-                    auto const& vfrac = f_volfrac.array(mfi);
+                    auto const& vfrac = f_volmulti.array(mfi);
+                    //EY:
+                    auto const& vmulticut = f_volfrac.array(mfi);
+
                     auto const& cflag = f_cellflag.array(mfi);
                     AMREX_D_TERM(auto const& apx = f_areafrac[0].array(mfi);,
                                  auto const& apy = f_areafrac[1].array(mfi);,
@@ -262,6 +278,9 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
         for (MFIter mfi(m_volfrac,true); mfi.isValid(); ++mfi)
         {
             auto const& cvol = m_volfrac.array(mfi);
+            // EY
+            auto const& cmulti = m_flag_multicut.array(mfi);
+
             auto const& ccent = m_centroid.array(mfi);
             auto const& cba = m_bndryarea.array(mfi);
             auto const& cbc = m_bndrycent.array(mfi);
@@ -326,6 +345,8 @@ Level::coarsenFromFine (Level& fineLevel, bool fill_boundary)
         for (MFIter mfi(m_volfrac); mfi.isValid(); ++mfi)
         {
             auto const& cvol = m_volfrac.array(mfi);
+            //EY:
+            auto const& cmulti = m_flag_multicut.array(mfi);
             auto const& ccent = m_centroid.array(mfi);
             auto const& cba = m_bndryarea.array(mfi);
             auto const& cbc = m_bndrycent.array(mfi);
@@ -506,6 +527,17 @@ Level::fillVolFrac (MultiFab& vfrac, const Geometry& geom) const
             }
         }
     }
+}
+
+//EY: flag multi-cut cells
+void
+Level::fillVolMultiCut (MultiFab& vfrac, const Geometry& geom) const
+{
+    vfrac.setVal(1.0);
+
+    vfrac.ParallelCopy(m_flag_multicut,0,0,1,0,vfrac.nGrow(),geom.periodicity());
+
+    const std::vector<IntVect>& pshifts = geom.periodicity().shiftIntVect();
 }
 
 namespace {

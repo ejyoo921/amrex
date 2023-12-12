@@ -37,6 +37,11 @@ public:
     //! value could be nullptr if not available.
     [[nodiscard]] const FArrayBox* getVolFracData () const;
 
+    // EY: for mutli-cut flag
+    //! Get a pointer to volume fraction data if available.  The return
+    //! value could be nullptr if not available.
+    [[nodiscard]] const FArrayBox* getMultiCutsData () const;
+
     //! Get a pointer to volume centroid data if available.  The return
     //! value could be nullptr if not available.
     [[nodiscard]] const FArrayBox* getCentroidData () const;

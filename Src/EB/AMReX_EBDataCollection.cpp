@@ -39,6 +39,10 @@ EBDataCollection::EBDataCollection (const EB2::Level& a_level,
         m_volfrac = new MultiFab(a_ba, a_dm, 1, m_ngrow[1], MFInfo(), FArrayBoxFactory());
         a_level.fillVolFrac(*m_volfrac, m_geom);
 
+        // EY:flag for multi-cuts cells
+        m_flag_multicut = new MultiFab(a_ba, a_dm, 1, m_ngrow[1], MFInfo(), FArrayBoxFactory());
+        a_level.fillVolMultiCut(*m_flag_multicut, m_geom);
+
         m_centroid = new MultiCutFab(a_ba, a_dm, AMREX_SPACEDIM, m_ngrow[1], *m_cellflags);
         a_level.fillCentroid(*m_centroid, m_geom);
     }
@@ -238,6 +242,8 @@ EBDataCollection::~EBDataCollection ()
     delete m_cellflags;
     delete m_levelset;
     delete m_volfrac;
+    // EY: multicut flag
+    delete m_flag_multicut;
     delete m_centroid;
     delete m_bndrycent;
     delete m_bndrynorm;
@@ -269,6 +275,14 @@ EBDataCollection::getVolFrac () const
 {
     AMREX_ASSERT(m_volfrac != nullptr);
     return *m_volfrac;
+}
+
+// EY:flag for multi-cuts cells
+const MultiFab&
+EBDataCollection::getMultiCuts () const
+{
+    AMREX_ASSERT(m_flag_multicut != nullptr);
+    return *m_flag_multicut;
 }
 
 const MultiCutFab&

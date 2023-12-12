@@ -33,6 +33,9 @@ public:
     [[nodiscard]] const FabArray<EBCellFlagFab>& getMultiEBCellFlagFab () const;
     [[nodiscard]] const MultiFab& getLevelSet () const;
     [[nodiscard]] const MultiFab& getVolFrac () const;
+    // EY:flag for multi-cuts cells
+    [[nodiscard]] const MultiFab& getMultiCuts () const;
+    
     [[nodiscard]] const MultiCutFab& getCentroid () const;
     [[nodiscard]] const MultiCutFab& getBndryCent () const;
     [[nodiscard]] const MultiCutFab& getBndryArea () const;
@@ -60,6 +63,8 @@ private:
     // EBSupport::volume
     MultiFab* m_volfrac = nullptr;
     MultiCutFab* m_centroid = nullptr;
+    // EY
+    MultiFab* m_flag_multicut = nullptr;
 
     // EBSupport::full
     MultiCutFab* m_bndrycent = nullptr;

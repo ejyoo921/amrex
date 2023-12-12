@@ -52,6 +52,9 @@ public:
 
     [[nodiscard]] const MultiFab& getVolFrac () const noexcept { return m_ebdc->getVolFrac(); }
 
+    // EY:flag for multi-cuts cells
+    [[nodiscard]] const MultiFab& getMultiCuts () const noexcept { return m_ebdc->getMultiCuts(); }
+
     [[nodiscard]] const MultiCutFab& getCentroid () const noexcept { return m_ebdc->getCentroid(); }
 
     [[nodiscard]] const MultiCutFab& getBndryCent () const noexcept { return m_ebdc->getBndryCent(); }
