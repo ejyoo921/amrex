@@ -215,7 +215,7 @@ namespace amrex::tri_geom_ops
             Real L2[6],L3[6],L4[6],ls_s1,ls_s2;
 
             // EY: v1 is the ref. point outise of the triangle (fluid) for sure.
-            //     v2 is the centroid of the triangle we care about now. 
+            //     v2 is the point of interest (target)
             //     t_s are the verticies of the triangle.
 
             side_op3(v1,v2,t1,t2,t3,S1,S2,S3);

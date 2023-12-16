@@ -1,8 +1,18 @@
 #include <AMReX_EB2_C.H>
 
 //EY
+#include <AMReX.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_EBFArrayBox.H>
 #include <AMReX_EBFabFactory.H>
 #include <AMReX_PlotFileUtil.H>
+#include <AMReX_EB2.H>
+#include <AMReX_EB2_IF.H>
+#include <AMReX_EB_utils.H>
+#include <AMReX_EB_STL_utils.H>
+#include <AMReX_Print.H>
+
 
 namespace amrex::EB2 {
 
@@ -365,7 +375,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  Array4<Real> const& m2z,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
-                 bool cover_multiple_cuts, Array4<Real> const& flagmulticut) noexcept
+                 bool cover_multiple_cuts) noexcept
 {
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
@@ -382,10 +392,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     const Box& xbx = amrex::grow(amrex::surroundingNodes(bx,0),1);
     AMREX_HOST_DEVICE_FOR_3D ( xbx, i, j, k,
-    {
-        // EY: getting a flag for multi-cuts cells/faces
-        // flag_multicut(i,j,k) = 0.0_rt;
-        
+    {  
         if (fx(i,j,k) == Type::regular) {
             apx(i,j,k) = 1.0_rt;
             fcx(i,j,k,0) = 0.0_rt;
@@ -463,9 +470,27 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 
                 // EY: we want to know where this is happening!
                 // amrex::Print() << "Let's go back to locate cuts: check data_multicut_xbx" << "\n";
-                flagmulticut(i,j,k) = 10.0_rt;
                 amrex::PrintToFile("data_multicut_xbx") << "fx(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
 
+                // EY: write plot file *just for the locations of multi-cuts
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(xbx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(xbx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_xbx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_xbx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_xbx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                WriteSingleLevelPlotfile("plt", flag_xbx, {"marker_x"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
                 Real bcy = 0.0_rt;
@@ -536,6 +561,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lzp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
+                    amrex::Print() << "*hp after xbx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_xbx")  << "cut # on lzp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+(j+1)*dx[1] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
                 }
@@ -570,7 +596,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
-    amrex::Print() << "*hp after xbx = " << *hp << "\n";
+    
     
     const Box& ybx = amrex::grow(amrex::surroundingNodes(bx,1),1);
     AMREX_HOST_DEVICE_FOR_3D ( ybx, i, j, k,
@@ -651,8 +677,27 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
                 // EY: we want to know where this is happening!
                 // amrex::Print() << "Let's go back to locate cuts: check data_multicut_ybx" << "\n";
-                flagmulticut(i,j,k) = 10.0_rt;
                 amrex::PrintToFile("data_multicut_ybx") << "fy(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+
+                // EY: write plot file *just for the locations of multi-cuts----------------------
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(ybx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(ybx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_ybx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_ybx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_ybx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                WriteSingleLevelPlotfile("plt", flag_ybx, {"marker_y"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
                 Real bcx = 0.0_rt;
@@ -722,6 +767,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lzp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
+                    amrex::Print() << "*hp after ybx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_ybx")  << "cut # on lzp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
                 }
@@ -756,8 +802,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
-    
-    amrex::Print() << "*hp after ybx = " << *hp << "\n";
  
     const Box& zbx = amrex::grow(amrex::surroundingNodes(bx,2),1);
     AMREX_HOST_DEVICE_FOR_3D ( zbx, i, j, k,
@@ -837,9 +881,28 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 Gpu::Atomic::Add(dp,1);
 
                 // EY: we want to know where this is happening!
-                amrex::Print() << "Let's go back to locate cuts: check data_multicut_zbx" << "\n";
-                flagmulticut(i,j,k) = 10.0_rt;
+                // amrex::Print() << "Let's go back to locate cuts: check data_multicut_zbx" << "\n";
                 amrex::PrintToFile("data_multicut_zbx") << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+
+                // EY: write plot file *just for the locations of multi-cuts----------------------
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(zbx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(zbx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_zbx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_zbx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_zbx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                WriteSingleLevelPlotfile("plt", flag_zbx, {"marker_z"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
                 Real bcx = 0.0_rt;
@@ -909,6 +972,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lyp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
+                    amrex::Print() << "*hp after zbx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_zbx") << "cut # on lyp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[1]+lyp*dx[1] << ") \n";
                 }
@@ -943,8 +1007,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
-
-    amrex::Print() << "*hp after zbx = " << *hp << "\n";
 
     const Box& bxg1 = amrex::grow(bx,1);
     // EY for covered/regular cells only
@@ -1011,11 +1073,11 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
         } else {
             // EY:
             amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
-            amrex::Print() << "Total *hp = " << *hp << "\n";
+            amrex::Print() << "Final *hp = " << *hp << "\n";
             
             // EY: blocking abort temporarily for debugging purpose
-            amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_faces: more than 2 cuts not supported**" << "\n";
-            // amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+            // amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_faces: more than 2 cuts not supported**" << "\n";
+            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }
     return *hp;
@@ -1178,8 +1240,8 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
     if (nsmallcells > 0 || nmulticuts > 0) {
         if (!cover_multiple_cuts && nmulticuts > 0) {
             // EY: blocking abort temporarily for debugging purpose
-            amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_cells: more than 2 cuts not supported**" << "\n";
-            // amrex::Abort("amrex::EB2::build_cells: multi-cuts not supported");
+            // amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_cells: more than 2 cuts not supported**" << "\n";
+            amrex::Abort("amrex::EB2::build_cells: multi-cuts not supported");
         }
         return;
     } else {

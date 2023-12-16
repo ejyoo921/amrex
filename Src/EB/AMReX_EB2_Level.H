@@ -427,7 +427,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
 
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
-                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts,vfr);
+                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts);
 
                 amrex::Print() << "HERE-after build faces" << "\n"; // EY
 

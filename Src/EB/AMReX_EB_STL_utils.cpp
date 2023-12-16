@@ -503,8 +503,8 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     Real other_value     = m_boundry_is_outside ?  inside_value : outside_value;
     
     // EY: checking point
-    amrex::Print() << "reference_value = " << reference_value << "\n";
-    amrex::Print() << "other_value = " << other_value << "\n";
+    // amrex::Print() << "reference_value = " << reference_value << "\n";
+    // amrex::Print() << "other_value = " << other_value << "\n";
 
 
     auto const& ma = mf.arrays();
