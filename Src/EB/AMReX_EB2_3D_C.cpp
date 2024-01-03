@@ -489,7 +489,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_xbx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt", flag_xbx, {"marker_x"}, geom, 0.0, 0);
+                WriteSingleLevelPlotfile("plt.x", flag_xbx, {"marker_x"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
@@ -561,7 +561,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lzp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
-                    amrex::Print() << "*hp after xbx = " << *hp << "\n";
+                    // amrex::Print() << "*hp after xbx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_xbx")  << "cut # on lzp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+(j+1)*dx[1] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
                 }
@@ -696,7 +696,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_ybx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt", flag_ybx, {"marker_y"}, geom, 0.0, 0);
+                WriteSingleLevelPlotfile("plt.y", flag_ybx, {"marker_y"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
@@ -767,7 +767,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lzp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
-                    amrex::Print() << "*hp after ybx = " << *hp << "\n";
+                    // amrex::Print() << "*hp after ybx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_ybx")  << "cut # on lzp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
                 }
@@ -901,7 +901,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_zbx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt", flag_zbx, {"marker_z"}, geom, 0.0, 0);
+                WriteSingleLevelPlotfile("plt.z", flag_zbx, {"marker_z"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
@@ -972,7 +972,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     lyp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
 
                     // EY: when do we get multi-cuts?
-                    amrex::Print() << "*hp after zbx = " << *hp << "\n";
+                    // amrex::Print() << "*hp after zbx = " << *hp << "\n";
                     amrex::PrintToFile("data_multicut_zbx") << "cut # on lyp = " << ncuts << "\n"; 
                     amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[1]+lyp*dx[1] << ") \n";
                 }
