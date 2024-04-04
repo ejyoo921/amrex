@@ -489,7 +489,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_xbx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt.x", flag_xbx, {"marker_x"}, geom, 0.0, 0);
+                std::string m_plot_file{"plt.x."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_xbx, {"marker_x"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
@@ -696,7 +698,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_ybx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt.y", flag_ybx, {"marker_y"}, geom, 0.0, 0);
+                std::string m_plot_file{"plt.y."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_ybx, {"marker_y"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
@@ -901,7 +905,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 stlobj.fill(flag_zbx,{0,0,0}, geom, -1.0, 1.0);
 
                 // write plot file
-                WriteSingleLevelPlotfile("plt.z", flag_zbx, {"marker_z"}, geom, 0.0, 0);
+                std::string m_plot_file{"plt.z."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_zbx, {"marker_z"}, geom, 0.0, 0);
                 // Finished plot file ----------------------------------------------------------------
 
                 int ncuts = 0;
