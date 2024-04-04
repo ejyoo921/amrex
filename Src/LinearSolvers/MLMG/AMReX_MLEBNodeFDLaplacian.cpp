@@ -223,24 +223,6 @@ MLEBNodeFDLaplacian::interpolation (int amrlev, int fmglev, MultiFab& fine,
 }
 
 void
-MLEBNodeFDLaplacian::averageDownSolutionRHS (int /*camrlev*/, MultiFab& /*crse_sol*/,
-                                             MultiFab& /*crse_rhs*/,
-                                             const MultiFab& /*fine_sol*/,
-                                             const MultiFab& /*fine_rhs*/)
-{
-    amrex::Abort("MLEBNodeFDLaplacian::averageDownSolutionRHS: todo");
-}
-
-void
-MLEBNodeFDLaplacian::reflux (int /*crse_amrlev*/, MultiFab& /*res*/,
-                             const MultiFab& /*crse_sol*/, const MultiFab& /*crse_rhs*/,
-                             MultiFab& /*fine_res*/, MultiFab& /*fine_sol*/,
-                             const MultiFab& /*fine_rhs*/) const
-{
-    amrex::Abort("MLEBNodeFDLaplacian::reflux: TODO");
-}
-
-void
 MLEBNodeFDLaplacian::prepareForSolve ()
 {
     BL_PROFILE("MLEBNodeFDLaplacian::prepareForSolve()");
@@ -284,20 +266,7 @@ MLEBNodeFDLaplacian::prepareForSolve ()
         });
     }
 
-    if (m_is_bottom_singular)
-    {
-        int amrlev = 0;
-        int mglev = 0;
-        auto const& dotmasks = m_coarse_dot_mask.arrays();
-        auto const& dirmasks = m_dirichlet_mask[amrlev][mglev]->const_arrays();
-        amrex::ParallelFor(m_coarse_dot_mask,
-        [=] AMREX_GPU_DEVICE (int box_no, int i, int j, int k) noexcept
-        {
-            if (dirmasks[box_no](i,j,k)) {
-                dotmasks[box_no](i,j,k) = Real(0.);
-            }
-        });
-    }
+    AMREX_ASSERT(!isBottomSingular());
 
     Gpu::streamSynchronize();
 

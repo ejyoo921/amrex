@@ -86,6 +86,8 @@ FabArrayBase::FabArrayStats        FabArrayBase::m_FA_stats;
 std::map<std::string,FabArrayBase::meminfo> FabArrayBase::m_mem_usage;
 std::vector<std::string>                    FabArrayBase::m_region_tag;
 
+bool                               FabArrayBase::m_alloc_single_chunk = false;
+
 namespace
 {
     bool initialized = false;
@@ -121,6 +123,9 @@ FabArrayBase::Initialize ()
     if (MaxComp < 1) {
         MaxComp = 1;
     }
+
+    ParmParse ppmf("amrex.mf");
+    ppmf.queryAdd("alloc_single_chunk", FabArrayBase::m_alloc_single_chunk);
 
     amrex::ExecOnFinalize(FabArrayBase::Finalize);
 
@@ -1325,8 +1330,7 @@ FabArrayBase::RB90::define (const FabArrayBase& fa)
                     {
                         Box bxsnd = (n==0) ? amrex::get<0>(dst_to_src)(bxrcv)
                                            : amrex::get<1>(dst_to_src)(bxrcv);
-                        send_tags[dst_owner].push_back(FabArrayBase::CopyComTag(bxrcv, bxsnd,
-                                                                                krcv, ksnd));
+                        send_tags[dst_owner].emplace_back(bxrcv, bxsnd, krcv, ksnd);
                     }
                 }
             }
@@ -1498,8 +1502,7 @@ FabArrayBase::RB180::define (const FabArrayBase& fa)
                 if (dst_owner != myproc) // local copy will be dealt with later
                 {
                     Box const& bxsnd = convert(bxrcv);
-                    send_tags[dst_owner].push_back(FabArrayBase::CopyComTag(bxrcv, bxsnd,
-                                                                            krcv, ksnd));
+                    send_tags[dst_owner].emplace_back(bxrcv, bxsnd, krcv, ksnd);
                 }
             }
         }
@@ -1683,8 +1686,7 @@ FabArrayBase::PolarB::define (const FabArrayBase& fa)
                     if (dst_owner != myproc) // local copy will be dealt with later
                     {
                         Box const bxsnd = (n<4) ? convert(bxrcv) : convert_corner(bxrcv);
-                        send_tags[dst_owner].push_back(FabArrayBase::CopyComTag(bxrcv, bxsnd,
-                                                                                krcv, ksnd));
+                        send_tags[dst_owner].emplace_back(bxrcv, bxsnd, krcv, ksnd);
                     }
                 }
             }
@@ -2698,5 +2700,73 @@ FabArrayBase::flushParForCache ()
 }
 
 #endif
+
+namespace detail {
+
+    SingleChunkArena::SingleChunkArena (Arena* a_arena, std::size_t a_size)
+        : m_dallocator(a_arena),
+          m_root((char*)m_dallocator.alloc(a_size)),
+          m_free(m_root),
+          m_size(a_size)
+    {}
+
+    SingleChunkArena::~SingleChunkArena ()
+    {
+        if (m_root) {
+            m_dallocator.free(m_root);
+        }
+    }
+
+    void* SingleChunkArena::alloc (std::size_t sz)
+    {
+        amrex::ignore_unused(m_size);
+        auto* p = (void*)m_free;
+        AMREX_ASSERT(sz <= m_size && ((m_free-m_root)+sz <= m_size));
+        m_free += sz;
+        return p;
+    }
+
+    void SingleChunkArena::free (void* /*pt*/) {}
+
+    bool SingleChunkArena::isDeviceAccessible () const {
+        return m_dallocator.arena()->isDeviceAccessible();
+    }
+
+    bool SingleChunkArena::isHostAccessible () const {
+        return m_dallocator.arena()->isHostAccessible();
+    }
+
+    bool SingleChunkArena::isManaged () const {
+        return m_dallocator.arena()->isManaged();
+    }
+
+    bool SingleChunkArena::isDevice () const {
+        return m_dallocator.arena()->isDevice();
+    }
+
+    bool SingleChunkArena::isPinned () const {
+        return m_dallocator.arena()->isPinned();
+    }
+}
+
+int nComp (FabArrayBase const& fa)
+{
+    return fa.nComp();
+}
+
+IntVect nGrowVect (FabArrayBase const& fa)
+{
+    return fa.nGrowVect();
+}
+
+BoxArray const& boxArray (FabArrayBase const& fa)
+{
+    return fa.boxArray();
+}
+
+DistributionMapping const& DistributionMap (FabArrayBase const& fa)
+{
+    return fa.DistributionMap();
+}
 
 }

@@ -293,6 +293,18 @@ For Robin boundary conditions, the ghost cells in
 store the numerical values in the condition,
 :math:`a\phi + b\frac{\partial\phi}{\partial n} = f`.
 
+4) Nodal solver provides the option to use an overset mask:
+
+.. highlight:: c++
+
+::
+
+   // omask is either 0 or 1. 1 means the node is an unknown. 0 means it's known.
+   void setOversetMask (int amrlev, const iMultiFab& a_dmask);
+
+Note this is an integer (not bool) MultiFab, so the values must be only either 0 or 1.
+
+
 .. _sec:linearsolver:pars:
 
 Parameters
@@ -483,7 +495,9 @@ To set homogeneous Dirichlet boundary conditions, call
     ml_ebabeclap->setEBHomogDirichlet(lev, coeff);
 
 where coeff can be a real number (i.e. the value is the same at every cell)
-or is the MultiFab holding the coefficient of the gradient at each cell with an EB face.
+or a MultiFab holding the coefficient of the gradient at each cell with an EB face.
+In other words, coeff is :math:`\beta` in the canonical form given in equation :eq:`eqn::abeclap`
+located at the EB surface centroid.
 
 To set inhomogeneous Dirichlet boundary conditions, call
 
@@ -494,8 +508,9 @@ To set inhomogeneous Dirichlet boundary conditions, call
     ml_ebabeclap->setEBDirichlet(lev, phi_on_eb, coeff);
 
 where phi_on_eb is the MultiFab holding the Dirichlet values in every cut cell,
-and coeff again is a real number (i.e. the value is the same at every cell)
-or a MultiFab holding the coefficient of the gradient at each cell with an EB face.
+and coeff again is a real number
+or a MultiFab holding the coefficient of the gradient at each cell with an EB face,
+i.e. :math:`\beta` in equation :eq:`eqn::abeclap` located at the EB surface centroid.
 
 Currently there are options to define the face-based coefficients on
 face centers vs face centroids, and to interpret the solution variable
@@ -565,7 +580,7 @@ The following parameter should be set to True if the problem to be solved has a 
 In this case, the solution is only defined to within a constant.  Setting this parameter to True
 replaces one row in the matrix sent to hypre from AMReX by a row that sets the value at one cell to 0.
 
-- :cpp:`hypre.adjust_singular_matrix`:   Default is False.
+- :cpp:`hypre.adjust_singular_matrix`:   Default is false.
 
 
 The following parameters can be set in the inputs file to control the choice of preconditioner and smoother:

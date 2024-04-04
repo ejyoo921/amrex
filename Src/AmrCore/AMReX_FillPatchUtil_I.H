@@ -189,7 +189,7 @@ void FillPatchInterp (MultiFab& mf_fine_patch, int fcomp, MultiFab const& mf_crs
                       MFInterpolater* mapper, const Vector<BCRec>& bcs, int bcscomp);
 
 template <typename MF, typename Interp>
-std::enable_if_t<IsFabArray<MF>::value && !std::is_same<Interp,MFInterpolater>::value>
+std::enable_if_t<IsFabArray<MF>::value && !std::is_same_v<Interp,MFInterpolater>>
 FillPatchInterp (MF& mf_fine_patch, int fcomp, MF const& mf_crse_patch, int ccomp,
                  int ncomp, IntVect const& ng, const Geometry& cgeom, const Geometry& fgeom,
                  Box const& dest_domain, const IntVect& ratio,
@@ -240,7 +240,7 @@ FillPatchInterp (MF& mf_fine_patch, int fcomp, MF const& mf_crse_patch, int ccom
 }
 
 template <typename MF, typename iMF, typename Interp>
-std::enable_if_t<IsFabArray<MF>::value  && !std::is_same<Interp,MFInterpolater>::value>
+std::enable_if_t<IsFabArray<MF>::value  && !std::is_same_v<Interp,MFInterpolater>>
 InterpFace (Interp *interp,
             MF const& mf_crse_patch,    int crse_comp,
             MF&       mf_refined_patch, int fine_comp,
@@ -293,14 +293,14 @@ InterpFace (InterpBase *interp,
 }
 
 
-namespace {
+namespace detail {
 
 // ======== FArrayBox
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_patch (FabArrayBase::FPinfo const& fpc, int ncomp)
     {
         MF mf_crse_patch(fpc.ba_crse_patch, fpc.dm_patch, ncomp, 0, MFInfo(),
@@ -309,9 +309,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type)
     {
         MF mf_crse_patch(amrex::convert(fpc.ba_crse_patch, idx_type), fpc.dm_patch,
@@ -320,9 +320,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_fine_patch (FabArrayBase::FPinfo const& fpc, int ncomp)
     {
         MF mf_fine_patch(fpc.ba_fine_patch, fpc.dm_patch, ncomp, 0, MFInfo(),
@@ -331,9 +331,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_fine_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type)
     {
         MF mf_fine_patch(amrex::convert(fpc.ba_fine_patch, idx_type), fpc.dm_patch,
@@ -342,9 +342,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_refined_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type, IntVect ratio)
     {
         MF mf_refined_patch(amrex::convert( amrex::refine( amrex::coarsen(fpc.ba_fine_patch, ratio), ratio), idx_type),
@@ -353,9 +353,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_mask (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type, IntVect ratio)
     {
         MF mf_crse_mask(amrex::convert(amrex::coarsen(fpc.ba_fine_patch, ratio), idx_type),
@@ -364,9 +364,9 @@ namespace {
     }
 
     template <typename MF,
-              typename std::enable_if<std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     void mf_set_domain_bndry (MF &mf, Geometry const & geom)
     {
         mf.setDomainBndry(std::numeric_limits<Real>::quiet_NaN(), geom);
@@ -376,63 +376,63 @@ namespace {
 // ======== Not FArrayBox
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                    FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                    FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_patch (FabArrayBase::FPinfo const& fpc, int ncomp)
     {
         return MF(fpc.ba_crse_patch, fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                    FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                    FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type)
     {
         return MF(amrex::convert(fpc.ba_crse_patch, idx_type), fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                    FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                    FArrayBox>,
+                                      int> = 0>
     MF make_mf_fine_patch (FabArrayBase::FPinfo const& fpc, int ncomp)
     {
         return MF(fpc.ba_fine_patch, fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                    FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                    FArrayBox>,
+                                      int> = 0>
     MF make_mf_fine_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type)
     {
         return MF(amrex::convert(fpc.ba_fine_patch, idx_type), fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_refined_patch (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type, IntVect ratio)
     {
         return MF(amrex::convert( amrex::refine( amrex::coarsen(fpc.ba_fine_patch, ratio), ratio), idx_type), fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                   FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                   FArrayBox>,
+                                      int> = 0>
     MF make_mf_crse_mask (FabArrayBase::FPinfo const& fpc, int ncomp, IndexType idx_type, IntVect ratio)
     {
         return MF(amrex::convert(amrex::coarsen(fpc.ba_fine_patch, ratio), idx_type), fpc.dm_patch, ncomp, 0);
     }
 
     template <typename MF,
-              typename std::enable_if<!std::is_same<typename MF::FABType::value_type,
-                                                    FArrayBox>::value,
-                                      int>::type = 0>
+              std::enable_if_t<!std::is_same_v<typename MF::FABType::value_type,
+                                                    FArrayBox>,
+                                      int> = 0>
     void mf_set_domain_bndry (MF &/*mf*/, Geometry const & /*geom*/)
     {
         // nothing
@@ -739,7 +739,7 @@ namespace {
         }
     }
 
-} // Anonymous namespace
+} // namespace detail
 
 template <typename MF, typename BC, typename Interp, typename PreInterpHook, typename PostInterpHook>
 std::enable_if_t<IsFabArray<MF>::value>
@@ -761,7 +761,7 @@ FillPatchTwoLevels (MF& mf, IntVect const& nghost, Real time,
 #else
     EB2::IndexSpace const* index_space = nullptr;
 #endif
-    FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp,fbc,fbccomp,ratio,mapper,bcs,bcscomp,
                             pre_interp,post_interp,index_space);
@@ -788,7 +788,7 @@ FillPatchTwoLevels (MF& mf, Real time,
     EB2::IndexSpace const* index_space = nullptr;
 #endif
 
-    FillPatchTwoLevels_doit(mf,mf.nGrowVect(),time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,mf.nGrowVect(),time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp,fbc,fbccomp,ratio,mapper,bcs,bcscomp,
                             pre_interp,post_interp,index_space);
@@ -815,7 +815,7 @@ FillPatchTwoLevels (Array<MF*, AMREX_SPACEDIM> const& mf, IntVect const& nghost,
     EB2::IndexSpace const* index_space = nullptr;
 #endif
 
-    FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp,fbc,fbccomp,ratio,mapper,bcs,bcscomp,
                             pre_interp,post_interp,index_space);
@@ -846,7 +846,7 @@ FillPatchTwoLevels (Array<MF*, AMREX_SPACEDIM> const& mf, IntVect const& nghost,
     Array<int, AMREX_SPACEDIM> fbccomp_arr = {AMREX_D_DECL(fbccomp,fbccomp,fbccomp)};
     Array<int, AMREX_SPACEDIM> bcscomp_arr = {AMREX_D_DECL(bcscomp,bcscomp,bcscomp)};
 
-    FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp_arr,fbc,fbccomp_arr,ratio,mapper,bcs,bcscomp_arr,
                             pre_interp,post_interp,index_space);
@@ -877,7 +877,7 @@ FillPatchTwoLevels (Array<MF*, AMREX_SPACEDIM> const& mf, Real time,
     Array<int, AMREX_SPACEDIM> fbccomp_arr = {AMREX_D_DECL(fbccomp,fbccomp,fbccomp)};
     Array<int, AMREX_SPACEDIM> bcscomp_arr = {AMREX_D_DECL(bcscomp,bcscomp,bcscomp)};
 
-    FillPatchTwoLevels_doit(mf,mf[0]->nGrowVect(),time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,mf[0]->nGrowVect(),time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp_arr,fbc,fbccomp_arr,ratio,mapper,bcs,bcscomp_arr,
                             pre_interp,post_interp,index_space);
@@ -900,7 +900,7 @@ FillPatchTwoLevels (MF& mf, IntVect const& nghost, Real time,
                     const PreInterpHook& pre_interp,
                     const PostInterpHook& post_interp)
 {
-    FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,nghost,time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp,fbc,fbccomp,ratio,mapper,bcs,bcscomp,
                             pre_interp,post_interp,&index_space);
@@ -922,7 +922,7 @@ FillPatchTwoLevels (MF& mf, Real time,
                     const PreInterpHook& pre_interp,
                     const PostInterpHook& post_interp)
 {
-    FillPatchTwoLevels_doit(mf,mf.nGrowVect(),time,cmf,ct,fmf,ft,
+    detail::FillPatchTwoLevels_doit(mf,mf.nGrowVect(),time,cmf,ct,fmf,ft,
                             scomp,dcomp,ncomp,cgeom,fgeom,
                             cbc,cbccomp,fbc,fbccomp,ratio,mapper,bcs,bcscomp,
                             pre_interp,post_interp,&index_space);
@@ -1016,7 +1016,7 @@ InterpFromCoarseLevel (MF& mf, IntVect const& nghost, Real time,
     {
         mf_crse_patch.define(ba_crse_patch, dm, ncomp, 0);
     }
-    mf_set_domain_bndry (mf_crse_patch, cgeom);
+    detail::mf_set_domain_bndry (mf_crse_patch, cgeom);
 
     mf_crse_patch.ParallelCopy(cmf, scomp, 0, ncomp, cgeom.periodicity());
 
@@ -1131,7 +1131,7 @@ InterpFromCoarseLevel (Array<MF*, AMREX_SPACEDIM> const& mf, IntVect const& ngho
 #else
         mf_crse_patch[d].define(ba_crse_idxed, dm, ncomp, 0);
 #endif
-        mf_set_domain_bndry(mf_crse_patch[d], cgeom);
+        detail::mf_set_domain_bndry(mf_crse_patch[d], cgeom);
 
         mf_crse_patch[d].ParallelCopy(*(cmf[d]), scomp, 0, ncomp, cgeom.periodicity());
         cbc[d](mf_crse_patch[d], 0, ncomp, mf_crse_patch[d].nGrowVect(), time, cbccomp);

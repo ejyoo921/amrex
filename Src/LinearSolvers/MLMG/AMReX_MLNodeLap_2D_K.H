@@ -12,6 +12,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_set_nodal_mask (int i, int j, int k, Array4<int> const& nmsk,
                              Array4<int const> const& cmsk) noexcept
 {
+    using namespace nodelap_detail;
+
     int s = cmsk(i-1,j-1,k) + cmsk(i  ,j-1,k)
         +   cmsk(i-1,j  ,k) + cmsk(i  ,j  ,k);
     if (s == 4*crse_cell) {
@@ -883,8 +885,6 @@ void mlndlap_semi_restriction (int i, int j, int k, Array4<Real> const& crse,
 // interpolation
 //
 
-namespace {
-
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real aa_interp_line_x (Array4<Real const> const& crse, Array4<Real const> const& sig,
                            int i, int j, int ic, int jc) noexcept
@@ -916,7 +916,6 @@ namespace {
                 w3 * aa_interp_line_x(crse,sig,i  ,j-1,ic  ,jc  ) +
                 w4 * aa_interp_line_x(crse,sig,i  ,j+1,ic  ,jc+1)) / (w1+w2+w3+w4);
     }
-}
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_interpadd_c (int i, int j, int, Array4<Real> const& fine,
@@ -1007,7 +1006,6 @@ void mlndlap_semi_interpadd_aa (int i, int j, int, Array4<Real> const& fine,
     }
 }
 
-namespace {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real ha_interp_face_xy (Array4<Real const> const& crse,
                             Array4<Real const> const& sigx, Array4<Real const> const& sigy,
@@ -1022,7 +1020,6 @@ namespace {
                 w3 * aa_interp_line_x(crse,sigx,i  ,j-1,ic  ,jc  ) +
                 w4 * aa_interp_line_x(crse,sigx,i  ,j+1,ic  ,jc+1)) / (w1+w2+w3+w4);
     }
-}
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_interpadd_ha (int i, int j, int,
@@ -1158,7 +1155,6 @@ void mlndlap_mknewu_c (int i, int j, int k, Array4<Real> const& u, Array4<Real c
     }
 }
 
-namespace {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real mlndlap_sum_Df (int ii, int jj, Real facx, Real facy,
                          Array4<Real const> const& vel, Box const& velbx, bool is_rz) noexcept
@@ -1181,7 +1177,6 @@ namespace {
         }
         return Df;
     }
-}
 
 template <int rr>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -1247,7 +1242,6 @@ void mlndlap_rhcc_fine_contrib (int i, int j, int, Box const& ccbx,
     }
 }
 
-namespace {
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
     Real neumann_scale (int i, int j, Box const& nddom,
                         GpuArray<LinOpBCType,AMREX_SPACEDIM> const& bclo,
@@ -1274,7 +1268,6 @@ namespace {
 
         return val;
     }
-}
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_divu_cf_contrib (int i, int j, int, Array4<Real> const& rhs,
@@ -1286,6 +1279,8 @@ void mlndlap_divu_cf_contrib (int i, int j, int, Array4<Real> const& rhs,
                               GpuArray<LinOpBCType,AMREX_SPACEDIM> const& bclo,
                               GpuArray<LinOpBCType,AMREX_SPACEDIM> const& bchi) noexcept
 {
+    using namespace nodelap_detail;
+
     if (!dmsk(i,j,0) && ndmsk(i,j,0) == crse_fine_node) {
         Real facx = Real(0.5) * dxinv[0];
         Real facy = Real(0.5) * dxinv[1];
@@ -1373,10 +1368,9 @@ void mlndlap_crse_resid (int i, int j, int k, Array4<Real> const& resid,
 // sync residual
 //
 
-namespace {
     template <typename P, typename S>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    Real mlndlap_sum_Ax (P && pred, S && sig, int i, int j, Real facx, Real facy,
+    Real mlndlap_sum_Ax (P const& pred, S const& sig, int i, int j, Real facx, Real facy,
                          Array4<Real const> const& phi, bool is_rz) noexcept
     {
         Real Ax = Real(0.0);
@@ -1418,7 +1412,7 @@ namespace {
 
     template <int rr, typename S>
     AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
-    void mlndlap_Ax_fine_contrib_doit (S&& sig, int i, int j, Box const& ndbx, Box const& ccbx,
+    void mlndlap_Ax_fine_contrib_doit (S const& sig, int i, int j, Box const& ndbx, Box const& ccbx,
                                        Array4<Real> const& f, Array4<Real const> const& res,
                                        Array4<Real const> const& rhs,
                                        Array4<Real const> const& phi,
@@ -1459,7 +1453,6 @@ namespace {
             f(i,j,0) = Real(0.0);
         }
     }
-}
 
 template <int rr>
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
@@ -1502,6 +1495,8 @@ void mlndlap_res_cf_contrib (int i, int j, int, Array4<Real> const& res,
                              GpuArray<LinOpBCType, AMREX_SPACEDIM> const& bchi,
                              bool neumann_doubling) noexcept
 {
+    using namespace nodelap_detail;
+
     if (!dmsk(i,j,0) && ndmsk(i,j,0) == crse_fine_node) {
         Real facx = Real(1./6.)*dxinv[0]*dxinv[0];
         Real facy = Real(1./6.)*dxinv[1]*dxinv[1];
@@ -1535,6 +1530,8 @@ void mlndlap_res_cf_contrib_cs (int i, int j, int, Array4<Real> const& res,
                                 GpuArray<LinOpBCType, AMREX_SPACEDIM> const& bchi,
                                 bool neumann_doubling) noexcept
 {
+    using namespace nodelap_detail;
+
     if (!dmsk(i,j,0) && ndmsk(i,j,0) == crse_fine_node) {
         Real facx = Real(1./6.)*dxinv[0]*dxinv[0];
         Real facy = Real(1./6.)*dxinv[1]*dxinv[1];
@@ -1581,6 +1578,8 @@ void mlndlap_set_stencil (Box const& bx, Array4<Real> const& sten,
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_set_stencil_s0 (int i, int j, int k, Array4<Real> const& sten) noexcept
 {
+    using namespace nodelap_detail;
+
     sten(i,j,k,0) = -(sten(i-1,j  ,k,1) + sten(i  ,j  ,k,1)
                     + sten(i  ,j-1,k,2) + sten(i  ,j  ,k,2)
                     + sten(i-1,j-1,k,3) + sten(i  ,j-1,k,3)
@@ -1595,6 +1594,8 @@ AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_stencil_rap (int i, int j, int, Array4<Real> const& csten,
                           Array4<Real const> const& fsten) noexcept
 {
+    using namespace nodelap_detail;
+
     constexpr int k = 0;
 
 #if 0
@@ -1867,6 +1868,8 @@ void mlndlap_interpadd_rap (int i, int j, int, Array4<Real> const& fine,
                             Array4<Real const> const& crse, Array4<Real const> const& sten,
                             Array4<int const> const& msk) noexcept
 {
+    using namespace nodelap_detail;
+
     if (!msk(i,j,0) && sten(i,j,0,0) != Real(0.0)) {
         int ic = amrex::coarsen(i,2);
         int jc = amrex::coarsen(j,2);
@@ -1910,6 +1913,8 @@ void mlndlap_restriction_rap (int i, int j, int /*k*/, Array4<Real> const& crse,
                               Array4<Real const> const& fine, Array4<Real const> const& sten,
                               Array4<int const> const& msk) noexcept
 {
+    using namespace nodelap_detail;
+
     int ii = i*2;
     int jj = j*2;
     if (msk(ii,jj,0)) {
@@ -1972,7 +1977,7 @@ void mlndlap_restriction_rap (int i, int j, int /*k*/, Array4<Real> const& crse,
 
 #ifdef AMREX_USE_EB
 
-namespace {
+namespace nodelap_detail {
     constexpr int i_S_x     = 0;
     constexpr int i_S_y     = 1;
     constexpr int i_S_x2    = 2;
@@ -1991,6 +1996,8 @@ void mlndlap_set_connection (int i, int j, int, Array4<Real> const& conn,
                              Array4<Real const> const& intg, Array4<Real const> const& vol,
                              Array4<EBCellFlag const> const& flag) noexcept
 {
+    using namespace nodelap_detail;
+
     if (flag(i,j,0).isCovered()) {
         for (int n = 0; n < 6; ++n) { conn(i,j,0,n) = Real(0.); }
     } else if (flag(i,j,0).isRegular() || vol(i,j,0) >= almostone) {
@@ -2088,6 +2095,8 @@ void add_eb_flow_contribution (int i, int j, int, Array4<Real> const& rhs,
                       Array4<Real const> const& sintg,
                       Array4<Real const> const& eb_vel_dot_n) noexcept
 {
+    using namespace nodelap_detail;
+
     Real fac_eb = 0.25 *dxinv[0];
 
     if (!msk(i,j,0)) {
@@ -2152,6 +2161,8 @@ Real mlndlap_rhcc_eb (int i, int j, int, Array4<Real const> const& rhcc,
                       Array4<Real const> const& vfrac, Array4<Real const> const& intg,
                       Array4<int const> const& msk) noexcept
 {
+    using namespace nodelap_detail;
+
     if (!msk(i,j,0)) {
         return
             rhcc(i  ,j  ,0)*(Real(0.25)*vfrac(i  ,j  ,0)-intg(i  ,j  ,0,i_S_x)-intg(i  ,j  ,0,i_S_y)+intg(i  ,j  ,0,i_S_xy)) +
@@ -2166,6 +2177,8 @@ Real mlndlap_rhcc_eb (int i, int j, int, Array4<Real const> const& rhcc,
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_set_integral (int i, int j, int, Array4<Real> const& intg) noexcept
 {
+    using namespace nodelap_detail;
+
     intg(i,j,0,i_S_x ) = Real(0.);
     intg(i,j,0,i_S_y ) = Real(0.);
     intg(i,j,0,i_S_x2) = Real(1./12.);
@@ -2176,6 +2189,8 @@ void mlndlap_set_integral (int i, int j, int, Array4<Real> const& intg) noexcept
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_set_surface_integral (int i, int j, int, Array4<Real> const& sintg) noexcept
 {
+    using namespace nodelap_detail;
+
     sintg(i,j,0,i_B_x ) = Real(0.);
     sintg(i,j,0,i_B_y ) = Real(0.);
     sintg(i,j,0,i_B_xy) = Real(0.);
@@ -2187,6 +2202,8 @@ void mlndlap_set_integral_eb (int i, int j, int, Array4<Real> const& intg,
                               Array4<Real const> const& ax, Array4<Real const> const& ay,
                               Array4<Real const> const& bcen) noexcept
 {
+    using namespace nodelap_detail;
+
     if (flag(i,j,0).isCovered()) {
         intg(i,j,0,i_S_x ) = Real(0.);
         intg(i,j,0,i_S_y ) = Real(0.);
@@ -2282,97 +2299,37 @@ void mlndlap_set_integral_eb (int i, int j, int, Array4<Real> const& intg,
 
 AMREX_GPU_HOST_DEVICE AMREX_FORCE_INLINE
 void mlndlap_set_surface_integral_eb (int i, int j, int, Array4<Real> const& sintg,
-                              Array4<EBCellFlag const> const& flag, Array4<Real const> const& vol,
-                              Array4<Real const> const& ax, Array4<Real const> const& ay,
+                              Array4<EBCellFlag const> const& flag,
                               Array4<Real const> const& bcen,
-                              Array4<Real const> const& barea) noexcept
+                              Array4<Real const> const& barea,
+                              Array4<Real const> const& bnorm) noexcept
 {
+    using namespace nodelap_detail;
+
     if (flag(i,j,0).isCovered() || flag(i,j,0).isRegular()) {
         sintg(i,j,0,i_B_x ) = Real(0.);
         sintg(i,j,0,i_B_y ) = Real(0.);
         sintg(i,j,0,i_B_xy) = Real(0.);
     } else {
-        Real axm = ax(i,j,0);
-        Real axp = ax(i+1,j,0);
-        Real aym = ay(i,j,0);
-        Real ayp = ay(i,j+1,0);
+        Real bcx = bcen(i,j,0,0);
+        Real bcy = bcen(i,j,0,1);
 
-        Real apnorm = std::sqrt((axm-axp)*(axm-axp) + (aym-ayp)*(aym-ayp));
-        if (apnorm == Real(0.)) {
-            amrex::Abort("amrex_mlndlap_set_surface_integral: we are in trouble");
-        }
+        Real btanx =  bnorm(i,j,0,1);
+        Real btany = -bnorm(i,j,0,0);
 
-        if (vol(i,j,0) >= almostone) {
-            sintg(i,j,0,i_B_x ) = Real(0.);
-            sintg(i,j,0,i_B_y ) = Real(0.);
-            sintg(i,j,0,i_B_xy) = Real(0.);
-            if (axm < Real(1.)) {
-                sintg(i,j,0,i_B_x) = Real(-0.5)*barea(i,j,0);
-            } else if (aym < Real(1.)) {
-                sintg(i,j,0,i_B_y) = Real(-0.5)*barea(i,j,0);
-            } else if (axp < Real(1.)) {
-                sintg(i,j,0,i_B_x) = Real( 0.5)*barea(i,j,0);
-            } else if (ayp < Real(1.)) {
-                sintg(i,j,0,i_B_y) = Real( 0.5)*barea(i,j,0);
-            } else {
-                amrex::Abort("amrex_mlndlap_set_surface_integral: we are in trouble");
-            }
-        } else {
-            Real apnorminv = Real(1.)/apnorm;
-            Real anrmx = (axm-axp) * apnorminv;  // pointing to the wall
-            Real anrmy = (aym-ayp) * apnorminv;
+        Real x0 =  bcx - Real(0.5)*barea(i,j,0)*btanx;
+        Real x1 =  bcx + Real(0.5)*barea(i,j,0)*btanx;
 
-            Real bcx = bcen(i,j,0,0);
-            Real bcy = bcen(i,j,0,1);
+        Real y0 =  bcy - Real(0.5)*barea(i,j,0)*btany;
+        Real y1 =  bcy + Real(0.5)*barea(i,j,0)*btany;
 
-            Real c = -(bcx * anrmx + bcy * anrmy);
+        Real Bx  = barea(i,j,0)*Real(0.5)*(x1 + x0);
+        Real By  = barea(i,j,0)*Real(0.5)*(y1 + y0);
+        Real Bxy = barea(i,j,0)*(x0*y0 + (x0*(y1 - y0) + y0*(x1 - x0))/Real(2.) + (x1 - x0)*(y1 - y0)/Real(3.));
 
-            GpuArray<RealVect,4> pts; //intersection points
-            int np = 0;
-            if (std::abs(anrmx) <= almostzero) {
-                pts[np++] = RealVect{Real(-0.5), Real(-c + Real(0.5)*anrmx)/anrmy};
-                pts[np++] = RealVect{Real( 0.5), Real(-c - Real(0.5)*anrmx)/anrmy};
-            } else if (std::abs(anrmy) <= almostzero) {
-                pts[np++] = RealVect{Real(-c + Real(0.5)*anrmy)/anrmx, Real(-0.5)};
-                pts[np++] = RealVect{Real(-c - Real(0.5)*anrmy)/anrmx, Real( 0.5)};
-            } else {
-                if (    (axm > Real(0.) && axm  < Real(1.))
-                     || (axm > Real(0.) && aym == Real(0.))
-                     || (axm > Real(0.) && ayp == Real(0.))) {
-                    pts[np++] = RealVect{Real(-0.5), Real(-c + Real(0.5)*anrmx)/anrmy};
-                }
-                if (    (axp > Real(0.) && axp  < Real(1.))
-                     || (axp > Real(0.) && aym == Real(0.))
-                     || (axp > Real(0.) && ayp == Real(0.))) {
-                    pts[np++] = RealVect{Real( 0.5), Real(-c - Real(0.5)*anrmx)/anrmy};
-                }
-                if (    (aym > Real(0.) && aym  < Real(1.))
-                     || (aym > Real(0.) && axm == Real(0.))
-                     || (aym > Real(0.) && axp == Real(0.))) {
-                    pts[np++] = RealVect{Real(-c + Real(0.5)*anrmy)/anrmx, Real(-0.5)};
-                }
-                if (    (ayp > Real(0.) && ayp  < Real(1.))
-                     || (ayp > Real(0.) && axm == Real(0.))
-                     || (ayp > Real(0.) && axp == Real(0.))) {
-                    pts[np++] = RealVect{Real(-c - Real(0.5)*anrmy)/anrmx, Real( 0.5)};
-                }
-            }
-
-            if (np != 2) {
-                amrex::Abort("amrex_mlndlap_set_surface_integral: we are in trouble");
-            }
-
-            Real x0 = pts[0][0], x1 = pts[1][0];
-            Real y0 = pts[0][1], y1 = pts[1][1];
-
-            Real Bx  = barea(i,j,0)*Real(0.5)*(x1 + x0);
-            Real By  = barea(i,j,0)*Real(0.5)*(y1 + y0);
-            Real Bxy = barea(i,j,0)*(x0*y0 + (x0*(y1 - y0) + y0*(x1 - x0))/Real(2.) + (x1 - x0)*(y1 - y0)/Real(3.));
-
-            sintg(i,j,0,i_B_x ) = Bx;
-            sintg(i,j,0,i_B_y ) = By;
-            sintg(i,j,0,i_B_xy) = Bxy;
-        }
+        sintg(i,j,0,i_B_x ) = Bx;
+        sintg(i,j,0,i_B_y ) = By;
+        sintg(i,j,0,i_B_xy) = Bxy;
     }
 }
 
@@ -2468,7 +2425,7 @@ void mlndlap_fillijmat_aa_cpu (Box const& ndbx,
     Real f2xmy = Real(2.0)*facx - facy;
     Real fmx2y = Real(2.0)*facy - facx;
 
-    // Note that ccdom has been grown at peridoci boundaries.
+    // Note that ccdom has been grown at periodic boundaries.
     const Box& nddom = amrex::surroundingNodes(ccdom);
 
     constexpr auto gidmax = std::numeric_limits<AtomicInt>::max();
@@ -2614,7 +2571,7 @@ void mlndlap_fillijmat_ha_cpu (Box const& ndbx,
     Real facx = Real(1.0/6.0)*dxinv[0]*dxinv[0];
     Real facy = Real(1.0/6.0)*dxinv[1]*dxinv[1];
 
-    // Note that ccdom has been grown at peridoci boundaries.
+    // Note that ccdom has been grown at periodic boundaries.
     const Box& nddom = amrex::surroundingNodes(ccdom);
 
     constexpr auto gidmax = std::numeric_limits<AtomicInt>::max();
@@ -2770,7 +2727,7 @@ void mlndlap_fillijmat_cs_cpu (Box const& ndbx,
     Real f2xmy = Real(2.0)*facx - facy;
     Real fmx2y = Real(2.0)*facy - facx;
 
-    // Note that ccdom has been grown at peridoci boundaries.
+    // Note that ccdom has been grown at periodic boundaries.
     const Box& nddom = amrex::surroundingNodes(ccdom);
 
     constexpr auto gidmax = std::numeric_limits<AtomicInt>::max();
@@ -3417,7 +3374,7 @@ void mlndlap_fillijmat_cs_gpu (const int ps, const int i, const int j, const int
             fp = fm = Real(0.0);
         }
 
-        // Note that nddom has been grown at peridoci boundaries.
+        // Note that nddom has been grown at periodic boundaries.
         const Box& nddom = amrex::surroundingNodes(ccdom);
 
         constexpr auto gidmax = std::numeric_limits<AtomicInt>::max();

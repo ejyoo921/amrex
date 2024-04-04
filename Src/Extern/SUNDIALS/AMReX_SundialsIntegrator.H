@@ -1,5 +1,6 @@
 #ifndef AMREX_SUNDIALS_INTEGRATOR_H
 #define AMREX_SUNDIALS_INTEGRATOR_H
+#include <AMReX_Config.H>
 #include <AMReX_REAL.H>
 #include <AMReX_Vector.H>
 #include <AMReX_ParmParse.H>
@@ -15,48 +16,48 @@
 #include <sunlinsol/sunlinsol_spgmr.h> /* access to SPGMR SUNLinearSolver        */
 #include <sunlinsol/sunlinsol_spfgmr.h> /* access to SPGMR SUNLinearSolver        */
 #include <sunnonlinsol/sunnonlinsol_fixedpoint.h> /* access to FixedPoint SUNNonlinearSolver */
-#include <sundials/sundials_types.h>   /* defs. of realtype, sunindextype, etc   */
+#include <sundials/sundials_types.h>   /* defs. of sunrealtype, sunindextype, etc   */
 
 namespace amrex {
 
 struct SundialsUserData {
-    std::function<int(realtype, N_Vector, N_Vector, void*)> f0;
-    std::function<int(realtype, N_Vector, N_Vector, void*)> f_fast;
-    std::function<int(realtype, N_Vector, N_Vector, void*)> f;
-    /* std::function<int(realtype, N_Vector*, int, void*)> StoreStage; */
-    std::function<int(realtype, N_Vector, void*)> ProcessStage;
-    std::function<int(realtype, N_Vector, void*)> PostStoreStage;
+    std::function<int(sunrealtype, N_Vector, N_Vector, void*)> f0;
+    std::function<int(sunrealtype, N_Vector, N_Vector, void*)> f_fast;
+    std::function<int(sunrealtype, N_Vector, N_Vector, void*)> f;
+    /* std::function<int(sunrealtype, N_Vector*, int, void*)> StoreStage; */
+    std::function<int(sunrealtype, N_Vector, void*)> ProcessStage;
+    std::function<int(sunrealtype, N_Vector, void*)> PostStoreStage;
 };
 
 namespace SundialsUserFun {
-    static int f0 (realtype t, N_Vector y, N_Vector ydot, void *user_data) {
+    static int f0 (sunrealtype t, N_Vector y, N_Vector ydot, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->f0(t, y, ydot, user_data);
     }
 
-    static int f_fast (realtype t, N_Vector y_data, N_Vector y_rhs, void *user_data) {
+    static int f_fast (sunrealtype t, N_Vector y_data, N_Vector y_rhs, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->f_fast(t, y_data, y_rhs, user_data);
     }
 
-    static int f (realtype t, N_Vector y_data, N_Vector y_rhs, void *user_data) {
+    static int f (sunrealtype t, N_Vector y_data, N_Vector y_rhs, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->f(t, y_data, y_rhs, user_data);
     }
 
 /*
-    static int StoreStage (realtype t, N_Vector* f_data, int nvecs, void *user_data) {
+    static int StoreStage (sunrealtype t, N_Vector* f_data, int nvecs, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->StoreStage(t, f_data, nvecs, user_data);
     }
 */
 
-    static int ProcessStage (realtype t, N_Vector y_data, void *user_data) {
+    static int ProcessStage (sunrealtype t, N_Vector y_data, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->ProcessStage(t, y_data, user_data);
     }
 
-    static int PostStoreStage(realtype t, N_Vector y_data, void *user_data) {
+    static int PostStoreStage(sunrealtype t, N_Vector y_data, void *user_data) {
         SundialsUserData* udata = static_cast<SundialsUserData*>(user_data);
         return udata->PostStoreStage(t, y_data, user_data);
     }
@@ -178,14 +179,30 @@ public:
     {
         initialize_parameters();
         mpi_comm = ParallelContext::CommunicatorSub();
+#if defined(SUNDIALS_VERSION_MAJOR) && (SUNDIALS_VERSION_MAJOR < 7)
         SUNContext_Create(&mpi_comm, &sunctx);
+#else
+#  ifdef AMREX_USE_MPI
+        SUNContext_Create(mpi_comm, &sunctx);
+#  else
+        SUNContext_Create(SUN_COMM_NULL, &sunctx);
+#  endif
+#endif
     }
 
     void initialize ()
     {
         initialize_parameters();
         mpi_comm = ParallelContext::CommunicatorSub();
+#if defined(SUNDIALS_VERSION_MAJOR) && (SUNDIALS_VERSION_MAJOR < 7)
         SUNContext_Create(&mpi_comm, &sunctx);
+#else
+#  ifdef AMREX_USE_MPI
+        SUNContext_Create(mpi_comm, &sunctx);
+#  else
+        SUNContext_Create(SUN_COMM_NULL, &sunctx);
+#  endif
+#endif
     }
 
     virtual ~SundialsIntegrator () {
@@ -245,7 +262,7 @@ public:
 
         /* Begin Section: SUNDIALS FUNCTION HOOKS */
         /* f routine to compute the ODE RHS function f(t,y). */
-        udata.f = [&](realtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
+        udata.f = [&](sunrealtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab> S_data;
             amrex::Vector<amrex::MultiFab> S_rhs;
 
@@ -265,7 +282,7 @@ public:
             return 0;
         };
 
-        udata.ProcessStage = [&](realtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
+        udata.ProcessStage = [&](sunrealtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab > S_data;
 
             const int num_vecs = N_VGetNumSubvectors_ManyVector(y_data);
@@ -421,14 +438,14 @@ public:
 
         /* Begin Section: SUNDIALS FUNCTION HOOKS */
         /* f0 routine to compute a zero-valued ODE RHS function f(t,y). */
-        udata.f0 = [&](realtype /* rhs_time */, N_Vector /* y */, N_Vector ydot, void * /* user_data */) -> int {
+        udata.f0 = [&](sunrealtype /* rhs_time */, N_Vector /* y */, N_Vector ydot, void * /* user_data */) -> int {
             // Initialize ydot to zero and return
             N_VConst(0.0, ydot);
             return 0;
         };
 
         /* f routine to compute the ODE RHS function f(t,y). */
-        udata.f_fast = [&](realtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
+        udata.f_fast = [&](sunrealtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab> S_data;
             amrex::Vector<amrex::MultiFab> S_rhs;
             amrex::Vector<amrex::MultiFab> S_stage_data;
@@ -456,7 +473,7 @@ public:
         };
 
         /* f routine to compute the ODE RHS function f(t,y). */
-        udata.f = [&](realtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
+        udata.f = [&](sunrealtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab> S_data;
             amrex::Vector<amrex::MultiFab> S_rhs;
 
@@ -476,7 +493,7 @@ public:
             return 0;
         };
 
-        udata.ProcessStage = [&](realtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
+        udata.ProcessStage = [&](sunrealtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab > S_data;
 
             const int num_vecs = N_VGetNumSubvectors_ManyVector(y_data);
@@ -492,7 +509,7 @@ public:
             return 0;
         };
 
-        udata.PostStoreStage = [&](realtype rhs_time, N_Vector y_data, void *user_data) -> int {
+        udata.PostStoreStage = [&](sunrealtype rhs_time, N_Vector y_data, void *user_data) -> int {
             udata.ProcessStage(rhs_time, y_data, user_data);
 
             for(int i=0; i<N_VGetNumSubvectors_ManyVector(y_data); i++)
@@ -607,7 +624,11 @@ public:
         MRIStepSStolerances(mristep_mem, reltol, abstol);
 
         /* Initialize spgmr solver */
+#if defined(SUNDIALS_VERSION_MAJOR) && (SUNDIALS_VERSION_MAJOR < 7)
         LS = SUNLinSol_SPGMR(nv_S, PREC_NONE, 10, sunctx);
+#else
+        LS = SUNLinSol_SPGMR(nv_S, SUN_PREC_NONE, 10, sunctx);
+#endif
         NLS = SUNNonlinSol_FixedPoint(nv_S, 50, sunctx);
 
         if (use_implicit_inner) { ARKStepSetNonlinearSolver(inner_mem, NLS); }
@@ -693,7 +714,7 @@ public:
 
         /* Begin Section: SUNDIALS FUNCTION HOOKS */
         /* f routine to compute the ODE RHS function f(t,y). */
-        udata.f = [&](realtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
+        udata.f = [&](sunrealtype rhs_time, N_Vector y_data, N_Vector y_rhs, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab> S_data;
             amrex::Vector<amrex::MultiFab> S_rhs;
 
@@ -713,7 +734,7 @@ public:
             return 0;
         };
 
-        udata.ProcessStage = [&](realtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
+        udata.ProcessStage = [&](sunrealtype rhs_time, N_Vector y_data, void * /* user_data */) -> int {
             amrex::Vector<amrex::MultiFab > S_data;
 
             const int num_vecs = N_VGetNumSubvectors_ManyVector(y_data);

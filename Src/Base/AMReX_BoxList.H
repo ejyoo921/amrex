@@ -48,7 +48,6 @@ namespace amrex
 * IndexType.  This class implements operations for sets of Boxes.
 * This is a concrete class, not a polymorphic one.
 */
-
 class BoxList
 {
 public:
@@ -213,7 +212,7 @@ public:
     //! Returns a constant reference to the Vector<Box>.
     [[nodiscard]] const Vector<Box>& data () const noexcept { return m_lbox; }
 
-    void swap (BoxList& rhs) {
+    void swap (BoxList& rhs) noexcept {
         std::swap(m_lbox, rhs.m_lbox);
         std::swap(btype, rhs.btype);
     }

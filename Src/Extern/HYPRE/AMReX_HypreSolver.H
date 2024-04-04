@@ -217,10 +217,10 @@ HypreSolver<MSS>::HypreSolver (Vector<IndexType>   const& a_index_type,
     m_cell_offset.define(m_grids[0], m_dmap);
 #endif
 
-    fill_local_id(a_marker);
+    fill_local_id(std::forward<Marker>(a_marker));
 
     // At this point, m_local_id stores the ids local to each box.
-    // m_nrows_grid stroes the number of unique points in each box.
+    // m_nrows_grid stores the number of unique points in each box.
     // m_nrows_proc is the number of rowss for all variables on this MPI
     // process.  If a point is invalid, its id is invalid (i.e., a very
     // negative number).  Note that the data type of local_node_id is int,
@@ -267,7 +267,7 @@ HypreSolver<MSS>::HypreSolver (Vector<IndexType>   const& a_index_type,
     m_b = m_hypre_ij->b();
     m_x = m_hypre_ij->x();
 
-    fill_matrix(a_filler);
+    fill_matrix(std::forward<Filler>(a_filler));
 }
 
 template <int MSS>

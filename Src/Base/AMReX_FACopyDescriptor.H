@@ -103,7 +103,6 @@ FabCopyDescriptor<FAB>::~FabCopyDescriptor ()
 * \brief This class orchestrates filling a destination fab of size destFabBox
 * from fabarray on the local processor (myProc).
 */
-
 template <class FAB>
 class FabArrayCopyDescriptor
 {
@@ -468,7 +467,7 @@ FabArrayCopyDescriptor<FAB>::CollectData ()
         const int Who = it->procThatHasData;
         const auto Cnt = static_cast<int>((it->box.numPts())*(it->nComp));
 
-        RcvTags[Who].push_back(it);
+        RcvTags[Who].emplace_back(it);
 
         Total_Rcvs_Size += Cnt;
 
@@ -698,7 +697,7 @@ FabArrayCopyDescriptor<FAB>::CollectData ()
         amrex::The_Arena()->free(md_recv_data);
     }
 
-    // Wait and upack data
+    // Wait and unpack data
     if (N_rcvs > 0)
     {
         Vector<MPI_Status> stats(N_rcvs);

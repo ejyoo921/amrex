@@ -20,7 +20,7 @@ HypreNodeLap::HypreNodeLap (const BoxArray& grids_, const DistributionMapping& d
       options_namespace(std::move(options_namespace_))
 {
     static_assert(AMREX_SPACEDIM > 1, "HypreNodeLap: 1D not supported");
-    static_assert(std::is_same<Real, HYPRE_Real>::value, "amrex::Real != HYPRE_Real");
+    static_assert(std::is_same_v<Real, HYPRE_Real>, "amrex::Real != HYPRE_Real");
 
     int num_procs, myid;
     MPI_Comm_size(comm, &num_procs);
@@ -47,7 +47,7 @@ HypreNodeLap::HypreNodeLap (const BoxArray& grids_, const DistributionMapping& d
     Int nnodes_proc = fill_local_node_id();
 
     // At this point, local_node_id stores the ids local to each box.
-    // nnodes_grid stroes the number of nodes in each box.  nnodes_proc is
+    // nnodes_grid stores the number of nodes in each box.  nnodes_proc is
     // the number of nodes on this MPI process.  If a nodal is invalid, its
     // id is invalid (i.e., a very negative number).  Note that the data
     // type of local_node_id is int, not HYPRE_Int for performance on GPU.

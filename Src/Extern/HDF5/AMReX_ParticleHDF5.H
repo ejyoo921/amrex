@@ -267,7 +267,7 @@ WritePlotFileHDF5 (const std::string& dir, const std::string& name,
 
 template <typename ParticleType, int NArrayReal, int NArrayInt,
           template<class> class Allocator, class CellAssignor>
-template <class F, typename std::enable_if<!std::is_same<F, Vector<std::string>>::value>::type*>
+template <class F, std::enable_if_t<!std::is_same_v<F, Vector<std::string>>>*>
 void
 ParticleContainer_impl<ParticleType, NArrayReal, NArrayInt, Allocator, CellAssignor>
 ::WritePlotFileHDF5 (const std::string& dir, const std::string& name,
@@ -325,7 +325,7 @@ ParticleContainer_impl<ParticleType, NArrayReal, NArrayInt, Allocator, CellAssig
 
 template <typename ParticleType, int NArrayReal, int NArrayInt,
           template<class> class Allocator, class CellAssignor>
-template <class F, typename std::enable_if<!std::is_same<F, Vector<std::string>>::value>::type*>
+template <class F, std::enable_if_t<!std::is_same_v<F, Vector<std::string>>>*>
 void
 ParticleContainer_impl<ParticleType, NArrayReal, NArrayInt, Allocator, CellAssignor>
 ::WritePlotFileHDF5 (const std::string& dir, const std::string& name,
@@ -711,12 +711,13 @@ ParticleContainer_impl<ParticleType, NArrayReal, NArrayInt, Allocator, CellAssig
         if (count[grid] == 0)
             continue;
 
-        int_size  = count[grid] * (2 + NStructInt + NArrayInt);
+        int_size  = count[grid] * (2 + NStructInt + NumIntComps());
         my_mfi_int_size.push_back(int_size);
         my_nparticles.push_back(count[grid]);
         my_mfi_int_total_size += int_size;
 
-        real_size = count[grid] * (AMREX_SPACEDIM + NStructReal + NArrayReal);
+
+        real_size = count[grid] * (AMREX_SPACEDIM + NStructReal + NumRealComps());
         my_mfi_real_size.push_back(real_size);
         my_mfi_real_total_size += real_size;
         my_mfi_cnt++;
