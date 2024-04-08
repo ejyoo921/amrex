@@ -264,7 +264,7 @@ struct MultiBlockCommMetaData : FabArrayBase::CommMetaData {
 //                                                           [concept.FabProjection]
 //
 
-//! \brief This type trait tests if a type P is a projetion for FAB.
+//! \brief This type trait tests if a type P is a projection for FAB.
 template <typename P, typename FAB>
 struct IsFabProjection
     : IsCallableR<typename FAB::value_type, P, Array4<const typename FAB::value_type>, Dim3, int>
@@ -296,9 +296,9 @@ struct Identity  {
 static constexpr Identity identity{};
 
 static_assert(sizeof(Identity) == 1 );
-static_assert(std::is_trivially_default_constructible<Identity>::value );
-static_assert(std::is_trivially_copy_assignable<Identity>::value );
-static_assert(std::is_trivially_copy_constructible<Identity>::value );
+static_assert(std::is_trivially_default_constructible_v<Identity> );
+static_assert(std::is_trivially_copy_assignable_v<Identity> );
+static_assert(std::is_trivially_copy_constructible_v<Identity> );
 static_assert(IsIndexMapping<Identity>() ); // NOLINT(bugprone-throw-keyword-missing)
 static_assert(IsFabProjection<Identity, FArrayBox>() ); // NOLINT(bugprone-throw-keyword-missing)
 
@@ -1129,7 +1129,7 @@ FillBoundary_finish (CommHandler handler,
     auto cmd = makeFillBoundaryMetaData(mf, mf.nGrowVect, geom, dtos);
     // The metadata cmd can be cached and reused on a MultiFab/FabArray with
     // the same BoxArray and DistributionMapping.
-    FillBoundary_finish(mf, cmd, scomp, ncomp, dtos, proj);
+    FillBoundary(mf, cmd, scomp, ncomp, dtos, proj);
 \endverbatim
  *
  * The FillBoundary capability here is more flexible than FabArray's

@@ -5,7 +5,6 @@
 #include <AMReX_Vector.H>
 #include <AMReX_PODVector.H>
 #include <AMReX_GpuAllocators.H>
-#include <AMReX_Scan.H>
 #include <type_traits>
 
 #include <numeric>
@@ -408,7 +407,7 @@ namespace amrex::Gpu {
                                std::is_trivially_copyable_v<T> &&
                                amrex::IsCallable<F, T&, Long>::value,
                                int> FOO = 0>
-    void fillAsync (IT first, IT last, F&& f) noexcept
+    void fillAsync (IT first, IT last, F const& f) noexcept
     {
         auto N = static_cast<Long>(std::distance(first, last));
         if (N <= 0) { return; }

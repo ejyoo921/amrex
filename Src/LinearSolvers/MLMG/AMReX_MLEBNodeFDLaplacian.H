@@ -18,7 +18,7 @@ namespace amrex {
 // where phi and rhs are nodal multifab, and sigma is a tensor constant
 // with only diagonal components.  The EB is assumed to be Dirichlet.
 //
-// del dot (simga grad phi) - alpha/r^2 phi = rhs, for RZ where alpha is a
+// del dot (sigma grad phi) - alpha/r^2 phi = rhs, for RZ where alpha is a
 // scalar constant that is zero by default.
 
 class MLEBNodeFDLaplacian
@@ -61,7 +61,7 @@ public:
     //
     template <typename F>
     std::enable_if_t<IsCallableR<Real,F,AMREX_D_DECL(Real,Real,Real)>::value>
-    setEBDirichlet (F&& f);
+    setEBDirichlet (F const& f);
 
     void define (const Vector<Geometry>& a_geom,
                  const Vector<BoxArray>& a_grids,
@@ -84,12 +84,6 @@ public:
 
     void restriction (int amrlev, int cmglev, MultiFab& crse, MultiFab& fine) const final;
     void interpolation (int amrlev, int fmglev, MultiFab& fine, const MultiFab& crse) const final;
-    void averageDownSolutionRHS (int camrlev, MultiFab& crse_sol, MultiFab& crse_rhs,
-                                 const MultiFab& fine_sol, const MultiFab& fine_rhs) final;
-
-    void reflux (int crse_amrlev,
-                 MultiFab& res, const MultiFab& crse_sol, const MultiFab& crse_rhs,
-                 MultiFab& fine_res, MultiFab& fine_sol, const MultiFab& fine_rhs) const final;
 
     void prepareForSolve () final;
     void Fapply (int amrlev, int mglev, MultiFab& out, const MultiFab& in) const final;
@@ -132,7 +126,7 @@ private:
 
 template <typename F>
 std::enable_if_t<IsCallableR<Real,F,AMREX_D_DECL(Real,Real,Real)>::value>
-MLEBNodeFDLaplacian::setEBDirichlet (F&& f)
+MLEBNodeFDLaplacian::setEBDirichlet (F const& f)
 {
     m_phi_eb.resize(m_num_amr_levels);
     for (int amrlev = 0; amrlev < m_num_amr_levels; ++amrlev) {

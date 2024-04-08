@@ -86,7 +86,8 @@ tracked as the particle positions change. To do this, we provide the
 
 ::
 
-      ParticleContainer<3, 2, 4, 4> mypc;
+      using MyParticleContainer = ParticleContainer<3, 2, 4, 4>;
+      MyParticleContainer mypc;
 
 Like the :cpp:`Particle` class itself, the :cpp:`ParticleContainer`
 class is templated. The first two template parameters have the same meaning as
@@ -375,8 +376,8 @@ example, to iterate over all the AoS data:
 ::
 
 
-    using MyParIter = ConstParIter<2*BL_SPACEDIM>;
-    for (MyParIter pti(pc, lev); pti.isValid(); ++pti) {
+    using MyParConstIter = MyParticleContainer::ParConstIterType;
+    for (MyParConstIter pti(pc, lev); pti.isValid(); ++pti) {
         const auto& particles = pti.GetArrayOfStructs();
         for (const auto& p : particles) {
             // do stuff with p...
@@ -392,7 +393,7 @@ skipped. You can also access the SoA data using the :math:`ParIter` as follows:
 ::
 
 
-    using MyParIter = ParIter<0, 0, 2, 2>;
+    using MyParIter = MyParticleContainer::ParIterType;
     for (MyParIter pti(pc, lev); pti.isValid(); ++pti) {
         auto& particle_attributes = pti.GetStructOfArrays();
         RealVector& real_comp0 = particle_attributes.GetRealData(0);
@@ -713,7 +714,7 @@ with OpenMP, the first thing to look at is whether there are enough tiles availa
 +-------------------+-----------------------------------------------------------------------+-------------+-------------+
 |                   | Description                                                           |   Type      | Default     |
 +===================+=======================================================================+=============+=============+
-| do_tiling         | Whether to use tiling for particles. Should be on when using OpenMP,  | Bool        | False       |
+| do_tiling         | Whether to use tiling for particles. Should be on when using OpenMP,  | Bool        | false       |
 |                   | and off when running on GPUs.                                         |             |             |
 +-------------------+-----------------------------------------------------------------------+-------------+-------------+
 | tile_size         | If tiling is on, the maximum tile_size to in each direction           | Ints        | 1024000,8,8 |
@@ -739,7 +740,7 @@ problems with particle IO, you could try varying some / all of these parameters.
 | datadigits_read   | This for backwards compatibility, don't use unless you need to read   | Int         | 5           |
 |                   | and old (pre mid 2017) AMReX dataset.                                 |             |             |
 +-------------------+-----------------------------------------------------------------------+-------------+-------------+
-| use_prepost       | This is an optimization for large particle datasets that groups MPI   | Bool        | False       |
+| use_prepost       | This is an optimization for large particle datasets that groups MPI   | Bool        | false       |
 |                   | calls needed during the IO together. Try it seeing poor IO speeds     |             |             |
 |                   | on large problems.                                                    |             |             |
 +-------------------+-----------------------------------------------------------------------+-------------+-------------+

@@ -1,5 +1,5 @@
-#ifndef NEIGHBOR_LIST_H_
-#define NEIGHBOR_LIST_H_
+#ifndef AMREX_NEIGHBOR_LIST_H_
+#define AMREX_NEIGHBOR_LIST_H_
 #include <AMReX_Config.H>
 
 #include <AMReX_Particles.H>
@@ -227,16 +227,16 @@ struct NeighborData
 };
 
 template<typename A, typename B,
-         typename std::enable_if<std::is_same<std::remove_cv_t<A>,
-                                              std::remove_cv_t<B> >::value, int>::type = 0>
+         std::enable_if_t<std::is_same_v<std::remove_cv_t<A>,
+                                         std::remove_cv_t<B> >, int> = 0>
 bool isSame (A const* pa, B const* pb)
 {
     return pa == pb;
 }
 
 template<typename A, typename B,
-         typename std::enable_if<!std::is_same<std::remove_cv_t<A>,
-                                               std::remove_cv_t<B> >::value, int>::type = 0>
+         std::enable_if_t<!std::is_same_v<std::remove_cv_t<A>,
+                                          std::remove_cv_t<B> >, int> = 0>
 bool isSame (A const* /*pa*/, B const* /*pb*/)
 {
     return false;

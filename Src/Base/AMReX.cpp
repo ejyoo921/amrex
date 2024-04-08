@@ -52,6 +52,7 @@
 #endif
 
 #ifdef AMREX_USE_OMP
+#include <AMReX_OpenMP.H>
 #include <omp.h>
 #endif
 
@@ -72,7 +73,9 @@
 #include <iostream>
 #include <iomanip>
 #include <new>
+#include <optional>
 #include <stack>
+#include <string>
 #include <thread>
 #include <limits>
 #include <vector>
@@ -443,6 +446,10 @@ amrex::Initialize (int& argc, char**& argv, bool build_parm_parse,
         pp.queryAdd("verbose", system::verbose);
     }
 
+    if (system::verbose > 0) {
+        amrex::Print() << "Initializing AMReX (" << amrex::Version() << ")...\n";
+    }
+
 #ifdef AMREX_USE_MPI
     if (system::verbose > 0) {
         amrex::Print() << "MPI initialized with "
@@ -450,20 +457,22 @@ amrex::Initialize (int& argc, char**& argv, bool build_parm_parse,
                        << " MPI processes\n";
         int provided = -1;
         MPI_Query_thread(&provided);
-        amrex::Print() << "MPI initialized with thread support level " << provided << std::endl;
+        amrex::Print() << "MPI initialized with thread support level " << provided << '\n';
     }
 #endif
 
 #ifdef AMREX_USE_OMP
+    amrex::OpenMP::Initialize();
+
+    // status output
     if (system::verbose > 0) {
 //    static_assert(_OPENMP >= 201107, "OpenMP >= 3.1 is required.");
         amrex::Print() << "OMP initialized with "
                        << omp_get_max_threads()
                        << " OMP threads\n";
     }
-#endif
 
-#if defined(AMREX_USE_MPI) && defined(AMREX_USE_OMP)
+    // warn if over-subscription is detected
     if (system::verbose > 0) {
         auto ncores = int(std::thread::hardware_concurrency());
         if (ncores != 0 && // It might be zero according to the C++ standard.
@@ -472,8 +481,10 @@ amrex::Initialize (int& argc, char**& argv, bool build_parm_parse,
             amrex::Print(amrex::ErrorStream())
                 << "AMReX Warning: You might be oversubscribing CPU cores with OMP threads.\n"
                 << "               There are " << ncores << " cores per node.\n"
-                << "               There are " << ParallelDescriptor::NProcsPerNode() << " MPI ranks per node.\n"
-                << "               But OMP is initialized with " << omp_get_max_threads() << " threads per rank.\n"
+#if defined(AMREX_USE_MPI)
+                << "               There are " << ParallelDescriptor::NProcsPerNode() << " MPI ranks (processes) per node.\n"
+#endif
+                << "               But OMP is initialized with " << omp_get_max_threads() << " threads per process.\n"
                 << "               You should consider setting OMP_NUM_THREADS="
                 << ncores/ParallelDescriptor::NProcsPerNode() << " or less in the environment.\n";
         }
@@ -677,7 +688,7 @@ amrex::Initialize (int& argc, char**& argv, bool build_parm_parse,
 #endif
 
     if (system::verbose > 0) {
-        amrex::Print() << "AMReX (" << amrex::Version() << ") initialized" << std::endl;
+        amrex::Print() << "AMReX (" << amrex::Version() << ") initialized" << '\n';
     }
 
     BL_TINY_PROFILE_INITIALIZE();
@@ -748,7 +759,7 @@ amrex::Finalize (amrex::AMReX* pamrex)
                                << "min used in a thread: " << mp_min << " MB, "
                                << "max used in a thread: " << mp_max << " MB, "
 #endif
-                               << "tot used: " << mp_tot << " MB." << std::endl;
+                               << "tot used: " << mp_tot << " MB." << '\n';
             }
         } else {
             int global_max = mp_tot;
@@ -806,6 +817,10 @@ amrex::Finalize (amrex::AMReX* pamrex)
     Gpu::Device::Finalize();
 #endif
 
+#ifdef AMREX_USE_OMP
+    amrex::OpenMP::Finalize();
+#endif
+
 #if defined(AMREX_USE_UPCXX)
     upcxx::finalize();
 #endif
@@ -823,7 +838,7 @@ amrex::Finalize (amrex::AMReX* pamrex)
 #endif
 
     if (amrex::system::verbose > 0 && is_ioproc) {
-        amrex::OutStream() << "AMReX (" << amrex::Version() << ") finalized" << std::endl;
+        amrex::OutStream() << "AMReX (" << amrex::Version() << ") finalized" << '\n';
     }
 }
 

@@ -2,6 +2,7 @@ foreach(D IN LISTS AMReX_SPACEDIM)
     #
     # Sources in subdirectory MLMG
     #
+    target_include_directories(amrex_${D}d PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>)
     target_include_directories(amrex_${D}d PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/MLMG>)
 
     target_sources(amrex_${D}d
@@ -49,6 +50,12 @@ foreach(D IN LISTS AMReX_SPACEDIM)
        MLMG/AMReX_MLEBNodeFDLaplacian.cpp
        MLMG/AMReX_MLEBNodeFDLap_K.H
        MLMG/AMReX_MLEBNodeFDLap_${D}D_K.H
+       MLMG/AMReX_MLNodeABecLaplacian.H
+       MLMG/AMReX_MLNodeABecLaplacian.cpp
+       MLMG/AMReX_MLNodeABecLap_K.H
+       MLMG/AMReX_MLNodeABecLap_${D}D_K.H
+       AMReX_GMRES.H
+       AMReX_GMRES_MLMG.H
        )
 
     if (D EQUAL 3)
@@ -57,6 +64,15 @@ foreach(D IN LISTS AMReX_SPACEDIM)
           MLMG/AMReX_MLMG_2D_K.H
           MLMG/AMReX_MLPoisson_2D_K.H
           MLMG/AMReX_MLALap_2D_K.H
+          )
+    endif ()
+
+    if (NOT D EQUAL 1)
+       target_sources(amrex_${D}d
+          PRIVATE
+          MLMG/AMReX_MLCurlCurl.H
+          MLMG/AMReX_MLCurlCurl.cpp
+          MLMG/AMReX_MLCurlCurl_K.H
           )
     endif ()
 

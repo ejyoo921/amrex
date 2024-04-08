@@ -46,11 +46,15 @@ namespace {
             boxes.push_back(is.second);
             slice_to_full_ba_map.push_back(is.first);
         }
-        BoxArray slice_ba(boxes.data(), static_cast<int>(boxes.size()));
-        DistributionMapping slice_dmap(std::move(procs));
+        if (!boxes.empty()) {
+            BoxArray slice_ba(boxes.data(), static_cast<int>(boxes.size()));
+            DistributionMapping slice_dmap(std::move(procs));
 
-        return std::make_unique<MultiFab>(slice_ba, slice_dmap, ncomp, 0,
-                                          MFInfo(), FArrayBoxFactory());
+            return std::make_unique<MultiFab>(slice_ba, slice_dmap, ncomp, 0,
+                                              MFInfo(), FArrayBoxFactory());
+        } else {
+            return nullptr;
+        }
     }
 }
 
@@ -308,9 +312,6 @@ namespace amrex
 
 // *************************************************************************************************************
 
-    // Average fine cell-based MultiFab onto crse cell-centered MultiFab.
-    // We do NOT assume that the coarse layout is a coarsened version of the fine layout.
-    // This version DOES use volume-weighting.
     void average_down (const MultiFab& S_fine, MultiFab& S_crse,
                        const Geometry& fgeom, const Geometry& cgeom,
                        int scomp, int ncomp, int rr)
@@ -477,7 +478,7 @@ namespace amrex
         auto tmptype = type;
         tmptype.set(dir);
         if (dir >= AMREX_SPACEDIM || !tmptype.nodeCentered()) {
-            amrex::Abort("average_down_edges: not face index type");
+            amrex::Abort("average_down_edges: not edge index type");
         }
         const int ncomp = crse.nComp();
         if (isMFIterSafe(fine, crse))
@@ -562,6 +563,10 @@ namespace amrex
 
         Vector<int> slice_to_full_ba_map;
         std::unique_ptr<MultiFab> slice = allocateSlice(dir, cc, ncomp, geom, coord, slice_to_full_ba_map);
+
+        if (!slice) {
+            return nullptr;
+        }
 
 #ifdef AMREX_USE_OMP
 #pragma omp parallel if (Gpu::notInLaunchRegion())

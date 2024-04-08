@@ -1942,7 +1942,8 @@ tiling flag is on. One can change the default size using :cpp:`ParmParse`
    | | FArrayBoxes.                                      |                                                      |
    +-----------------------------------------------------+------------------------------------------------------+
 
-Dynamic tiling, which runs one box per OpenMP thread, is also available.
+Dynamic tiling, which runs one box per OpenMP thread, either with or without
+tiling the box, is also available.
 This is useful when the underlying work cannot benefit from thread
 parallelization.  Dynamic tiling is implemented using the :cpp:`MFItInfo`
 object and requires the :cpp:`MFIter` loop to be defined in an OpenMP
@@ -1981,9 +1982,13 @@ Dynamic tiling also allows explicit definition of a tile size:
           ...
       }
 
-Usually :cpp:`MFIter` is used for accessing multiple MultiFabs like the second
-example, in which two MultiFabs, :cpp:`U` and :cpp:`F`, use :cpp:`MFIter` via
-:cpp:`operator[]`. These different MultiFabs may have different BoxArrays. For
+Note that :cpp:`EnableTiling()`, with no argument, will use the default tile size.
+
+Usually :cpp:`MFIter` is used for accessing multiple MultiFabs, like
+the second example in the previous section on :ref:`sec:basics:mfiter:notiling`
+in which two MultiFabs, :cpp:`U` and :cpp:`F`, use :cpp:`MFIter` via
+:cpp:`array()` and :cpp:`const_array()` functions. These different MultiFabs
+may have different BoxArrays. For
 example, :cpp:`U` might be cell-centered, whereas :cpp:`F` might be nodal in
 :math:`x`-direction and cell in other directions. The :cpp:`MFIter::validbox`
 and :cpp:`tilebox` functions return Boxes of the same type as the
@@ -2537,11 +2542,26 @@ The basic idea behind physical boundary conditions is as follows:
 
        ext_dir
            "External Dirichlet". It is the user's responsibility to write a routine
-           to fill ghost cells (more details below).
+           to fill ghost cells (more details below). The boundary location
+           is on the domain face even when the data inside the domain are
+           cell-centered.
+
+       ext_dir_cc
+           "External Dirichlet". It is the user's responsibility to write a routine
+           to fill ghost cells (more details below). The boundary location
+           is at the cell center of ghost cells outside the domain.
 
        foextrap
            "First Order Extrapolation"
            First order extrapolation from last cell in interior.
+
+       hoextrap
+           "High Order Extrapolation". The boundary location is on the domain
+           face even when the data inside the domain are cell-centered.
+
+       hoextrapcc
+           "High Order Extrapolation" The boundary location is at the cell
+           center of ghost cells outside the domain.
 
        reflect_even
            Reflection from interior cells with sign
@@ -2797,3 +2817,6 @@ Backtrace files are produced by AMReX signal handler by default when
 segfault occurs or ``Abort`` is called.  If the application does not
 want AMReX to handle this, ``ParmParse`` parameter
 `amrex.signal_handling=0` can be used to disable it.
+
+See :ref:`sec:gpu:assertion` for considerations on using these functions in
+GPU-enabled code.
