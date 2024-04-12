@@ -1,5 +1,19 @@
 #include <AMReX_EB2_C.H>
 
+//EY
+#include <AMReX.H>
+#include <AMReX_ParmParse.H>
+#include <AMReX_MultiFab.H>
+#include <AMReX_EBFArrayBox.H>
+#include <AMReX_EBFabFactory.H>
+#include <AMReX_PlotFileUtil.H>
+#include <AMReX_EB2.H>
+#include <AMReX_EB2_IF.H>
+#include <AMReX_EB_utils.H>
+#include <AMReX_EB_STL_utils.H>
+#include <AMReX_Print.H>
+
+
 namespace amrex::EB2 {
 
 namespace {
@@ -378,7 +392,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     const Box& xbx = amrex::grow(amrex::surroundingNodes(bx,0),1);
     AMREX_HOST_DEVICE_FOR_3D ( xbx, i, j, k,
-    {
+    {  
         if (fx(i,j,k) == Type::regular) {
             apx(i,j,k) = 1.0_rt;
             fcx(i,j,k,0) = 0.0_rt;
@@ -453,6 +467,106 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+                
+                // EY: we want to know where this is happening!
+                // amrex::Print() << "Let's go back to locate cuts: check data_multicut_xbx" << "\n";
+                amrex::PrintToFile("data_multicut_xbx") << "fx(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+
+                // EY: write plot file *just for the locations of multi-cuts
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(xbx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(xbx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_xbx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_xbx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_xbx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                std::string m_plot_file{"plt.x."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_xbx, {"marker_x"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
+
+                int ncuts = 0;
+                Real bcy = 0.0_rt;
+                Real bcz = 0.0_rt;
+
+                Real lym;
+                if (ey(i,j,k) == Type::regular) {
+                    lym = 1.0_rt;
+                } else if (ey(i,j,k) == Type::covered) {
+                    lym = 0.0_rt;
+                } else  {
+                    ++ncuts;
+                    Real cut = (intery(i,j,k)-(problo[1]+j*dx[1]))*dyinv;
+                    bcy  += cut;
+                    lym = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lym = amrex::min(amrex::max(Real(0.0),lym),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_xbx")  << "cut # on lym = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+lym*dx[1] <<"," << problo[2]+(k)*dx[2] << ") \n"; 
+                }
+
+                Real lyp;
+                if (ey(i,j,k+1) == Type::regular) {
+                    lyp = 1.0_rt;
+                } else if (ey(i,j,k+1) == Type::covered) {
+                    lyp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (intery(i,j,k+1)-(problo[1]+j*dx[1]))*dyinv;
+                    bcy += cut;
+                    bcz += 1.0_rt;
+                    lyp = (levset(i,j,k+1) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lyp = amrex::min(amrex::max(Real(0.0),lyp),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_xbx")  << "cut # on lyp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+lyp*dx[1] <<"," << problo[2]+(k+1)*dx[2] << ") \n";  
+                }
+
+                Real lzm;
+                if (ez(i,j,k) == Type::regular) {
+                    lzm = 1.0_rt;
+                } else if (ez(i,j,k) == Type::covered) {
+                    lzm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i,j,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcz += cut;
+                    lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lzm = amrex::min(amrex::max(Real(0.0),lzm),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_xbx")  << "cut # on lzm = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+j*dx[1] <<"," << problo[2]+lzm*dx[2] << ") \n"; 
+                }
+
+                Real lzp;
+                if (ez(i,j+1,k) == Type::regular) {
+                    lzp = 1.0_rt;
+                } else if (ez(i,j+1,k) == Type::covered) {
+                    lzp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i,j+1,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcy += 1.0_rt;
+                    bcz += cut;
+                    lzp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                    // EY: when do we get multi-cuts?
+                    // amrex::Print() << "*hp after xbx = " << *hp << "\n";
+                    amrex::PrintToFile("data_multicut_xbx")  << "cut # on lzp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_xbx") << "cut physical point: (y,z)=(" << problo[1]+(j+1)*dx[1] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
+                }
             }
 
             if ((ncuts > 2) || (lym <= small && lyp <= small && lzm <= small && lzp <= small)) {
@@ -484,7 +598,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
-
+    
+    
     const Box& ybx = amrex::grow(amrex::surroundingNodes(bx,1),1);
     AMREX_HOST_DEVICE_FOR_3D ( ybx, i, j, k,
     {
@@ -543,7 +658,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 ++ncuts;
                 Real cut = (interz(i,j,k)-(problo[2]+k*dx[2]))*dzinv;
                 bcz += cut;
-                lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut; // EY: checking the direction to get to the cut point
             }
 
             Real lzp;
@@ -561,6 +676,105 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+
+                // EY: we want to know where this is happening!
+                // amrex::Print() << "Let's go back to locate cuts: check data_multicut_ybx" << "\n";
+                amrex::PrintToFile("data_multicut_ybx") << "fy(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+
+                // EY: write plot file *just for the locations of multi-cuts----------------------
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(ybx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(ybx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_ybx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_ybx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_ybx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                std::string m_plot_file{"plt.y."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_ybx, {"marker_y"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
+
+                int ncuts = 0;
+                Real bcx = 0.0_rt;
+                Real bcz = 0.0_rt;
+
+                Real lxm;
+                if (ex(i,j,k) == Type::regular) {
+                    lxm = 1.0_rt;
+                } else if (ex(i,j,k) == Type::covered) {
+                    lxm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j,k)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    lxm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxm = amrex::min(amrex::max(Real(0.0),lxm),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_ybx")  << "cut # on lxm = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+lxm*dx[0] <<"," << problo[2]+(k)*dx[2] << ") \n"; 
+                }
+
+                Real lxp;
+                if (ex(i,j,k+1) == Type::regular) {
+                    lxp = 1.0_rt;
+                } else if (ex(i,j,k+1) == Type::covered) {
+                    lxp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j,k+1)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    bcz += 1.0_rt;
+                    lxp = (levset(i,j,k+1) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxp = amrex::min(amrex::max(Real(0.0),lxp),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_ybx")  << "cut # on lxp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+lxp*dx[0] <<"," << problo[2]+(k+1)*dx[2] << ") \n"; 
+                }
+
+                Real lzm;
+                if (ez(i,j,k) == Type::regular) {
+                    lzm = 1.0_rt;
+                } else if (ez(i,j,k) == Type::covered) {
+                    lzm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i,j,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcz += cut;
+                    lzm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut; // EY: checking the direction to get to the cut point
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_ybx")  << "cut # on lzm = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+i*dx[0] <<"," << problo[2]+lzm*dx[2] << ") \n"; 
+                }
+
+                Real lzp;
+                if (ez(i+1,j,k) == Type::regular) {
+                    lzp = 1.0_rt;
+                } else if (ez(i+1,j,k) == Type::covered) {
+                    lzp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interz(i+1,j,k)-(problo[2]+k*dx[2]))*dzinv;
+                    bcx += 1.0_rt;
+                    bcz += cut;
+                    lzp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                    // EY: when do we get multi-cuts?
+                    // amrex::Print() << "*hp after ybx = " << *hp << "\n";
+                    amrex::PrintToFile("data_multicut_ybx")  << "cut # on lzp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_ybx") << "cut physical point: (x,z)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[2]+lzp*dx[2] << ") \n"; 
+                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lzm <= small && lzp <= small)) {
@@ -592,7 +806,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             }
         }
     });
-
+ 
     const Box& zbx = amrex::grow(amrex::surroundingNodes(bx,2),1);
     AMREX_HOST_DEVICE_FOR_3D ( zbx, i, j, k,
     {
@@ -669,6 +883,105 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
+
+                // EY: we want to know where this is happening!
+                // amrex::Print() << "Let's go back to locate cuts: check data_multicut_zbx" << "\n";
+                amrex::PrintToFile("data_multicut_zbx") << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+
+                // EY: write plot file *just for the locations of multi-cuts----------------------
+                int old_flag = amrex::MFIter::allowMultipleMFIters(true);
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+
+                Geometry geom(zbx,real_box,CoordSys::cartesian,{0,0,0});
+                BoxArray ba(zbx);
+                DistributionMapping dm(ba); 
+                
+                STLtools stlobj; 
+                MultiFab flag_zbx;
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                int nghost = 1;
+                flag_zbx.define(nodal_ba, dm, 1, nghost);
+                stlobj.fill(flag_zbx,{0,0,0}, geom, -1.0, 1.0);
+
+                // write plot file
+                std::string m_plot_file{"plt.z."};
+                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
+                WriteSingleLevelPlotfile(plotfilename, flag_zbx, {"marker_z"}, geom, 0.0, 0);
+                // Finished plot file ----------------------------------------------------------------
+
+                int ncuts = 0;
+                Real bcx = 0.0_rt;
+                Real bcy = 0.0_rt;
+
+                Real lxm;
+                if (ex(i,j,k) == Type::regular) {
+                    lxm = 1.0_rt;
+                } else if (ex(i,j,k) == Type::covered) {
+                    lxm = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j,k)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    lxm = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxm = amrex::min(amrex::max(Real(0.0),lxm),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_zbx") << "cut # on lxm = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+lxm*dx[0] <<"," << problo[1]+j*dx[1] << ") \n"; 
+                }
+
+                Real lxp;
+                if (ex(i,j+1,k) == Type::regular) {
+                    lxp = 1.0_rt;
+                } else if (ex(i,j+1,k) == Type::covered) {
+                    lxp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (interx(i,j+1,k)-(problo[0]+i*dx[0]))*dxinv;
+                    bcx += cut;
+                    bcy += 1.0_rt;
+                    lxp = (levset(i,j+1,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+                    lxp = amrex::min(amrex::max(Real(0.0),lxp),Real(1.0));
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_zbx") << "cut # on lxp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+lxp*dx[0] <<"," << problo[1]+(j+1)*dx[1] << ") \n";
+                }
+
+                Real lym;
+                if (ey(i,j,k) == Type::regular) {
+                    lym = 1.0_rt;
+                } else if (ey(i,j,k) == Type::covered) {
+                    lym = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (intery(i,j,k)-(problo[1]+j*dx[1]))*dyinv;
+                    bcy += cut;
+                    lym = (levset(i,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                    // EY: when do we get multi-cuts?
+                    amrex::PrintToFile("data_multicut_zbx") << "cut # on lym = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+i*dx[0] <<"," << problo[1]+lym*dx[1] << ") \n";
+                }
+
+                Real lyp;
+                if (ey(i+1,j,k) == Type::regular) {
+                    lyp = 1.0_rt;
+                } else if (ey(i+1,j,k) == Type::covered) {
+                    lyp = 0.0_rt;
+                } else {
+                    ++ncuts;
+                    Real cut = (intery(i+1,j,k)-(problo[1]+j*dx[1]))*dyinv;
+                    bcx += 1.0_rt;
+                    bcy += cut;
+                    lyp = (levset(i+1,j,k) < 0.0_rt) ? cut : 1.0_rt-cut;
+
+                    // EY: when do we get multi-cuts?
+                    // amrex::Print() << "*hp after zbx = " << *hp << "\n";
+                    amrex::PrintToFile("data_multicut_zbx") << "cut # on lyp = " << ncuts << "\n"; 
+                    amrex::PrintToFile("data_multicut_zbx") << "cut physical point: (x,y)=(" << problo[0]+(i+1)*dx[0] <<"," << problo[1]+lyp*dx[1] << ") \n";
+                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lym <= small && lyp <= small)) {
@@ -702,6 +1015,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     });
 
     const Box& bxg1 = amrex::grow(bx,1);
+    // EY for covered/regular cells only
     AMREX_HOST_DEVICE_FOR_3D ( bxg1, i, j, k,
     {
         if (cell(i,j,k).isSingleValued()) {
@@ -724,6 +1038,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
     if (*hp > 0) {
         if (cover_multiple_cuts) {
+            amrex::Print() << "You chose to cover multiple cuts " << "\n"; 
             Box const& nbxg1 = amrex::surroundingNodes(bxg1);
             AMREX_HOST_DEVICE_FOR_3D(nbxg1, i, j, k,
             {
@@ -757,12 +1072,20 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                         levset(i,j,k) = Real(0.0);
                     }
                 }
+                else {
+                    amrex::Print() << "i = " << i << "\n";
+                }
             });
         } else {
+            // EY:
+            amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
+            amrex::Print() << "Final *hp = " << *hp << "\n";
+            
+            // EY: blocking abort temporarily for debugging purpose
+            // amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_faces: more than 2 cuts not supported**" << "\n";
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }
-
     return *hp;
 }
 
@@ -922,6 +1245,8 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
 
     if (nsmallcells > 0 || nmulticuts > 0) {
         if (!cover_multiple_cuts && nmulticuts > 0) {
+            // EY: blocking abort temporarily for debugging purpose
+            // amrex::Print() << "ABORT ATTEMPT**amrex::EB2::build_cells: more than 2 cuts not supported**" << "\n";
             amrex::Abort("amrex::EB2::build_cells: multi-cuts not supported");
         }
         return;
