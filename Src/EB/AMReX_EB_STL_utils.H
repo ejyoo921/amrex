@@ -60,14 +60,17 @@ private:
 
     XDim3 m_ptmin;  // All triangles are inside the bounding box defined by
     XDim3 m_ptmax;  // m_ptmin and m_ptmax.
+
     XDim3 m_ptref;  // The reference point is slightly outside the bounding box.
+    XDim3 m_ptref2;  // The reference point is slightly outside the bounding box. For safety. EY
+    XDim3 m_ptref3;  // The reference point is slightly outside the bounding box. For safety. EY
+
     bool m_boundry_is_outside; // Is the bounding box boundary outside or inside the object?
 
     void read_ascii_stl_file (std::string const& fname, Real scale,
                               Array<Real,3> const& center, int reverse_normal);
     void read_binary_stl_file (std::string const& fname, Real scale,
                                Array<Real,3> const& center, int reverse_normal);
-
 
     // EY from Hari for CGAL
     // //host vectors

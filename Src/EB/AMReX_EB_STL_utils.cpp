@@ -455,11 +455,31 @@ STLtools::prepare ()
             m_ptref.x = cent0.x + (Lp+Leps) * norm.x;
             m_ptref.y = cent0.y + (Lp+Leps) * norm.y;
             m_ptref.z = cent0.z + (Lp+Leps) * norm.z;
+
+            // Rotating on xy plane from the ptref.
+            m_ptref2.x = -0.5*(m_ptref.x + std::sqrt(3)*m_ptref.y);
+            m_ptref2.y = -0.5*(m_ptref.y - std::sqrt(3)*m_ptref.x);
+            m_ptref2.z = m_ptref.z;
+
+            m_ptref3.x = -0.5*(m_ptref.x - std::sqrt(3)*m_ptref.y);
+            m_ptref3.y = -0.5*(m_ptref.y + std::sqrt(3)*m_ptref.x);
+            m_ptref3.z = m_ptref.z;
+
             is_ref_positive = true; 
         } else {
             m_ptref.x = cent0.x + (Lm-Leps) * norm.x;
             m_ptref.y = cent0.y + (Lm-Leps) * norm.y;
             m_ptref.z = cent0.z + (Lm-Leps) * norm.z;
+
+            // Rotating on xy plane from the ptref.
+            m_ptref2.x = -0.5*(m_ptref.x + std::sqrt(3)*m_ptref.y);
+            m_ptref2.y = -0.5*(m_ptref.y - std::sqrt(3)*m_ptref.x);
+            m_ptref2.z = m_ptref.z;
+
+            m_ptref3.x = -0.5*(m_ptref.x - std::sqrt(3)*m_ptref.y);
+            m_ptref3.y = -0.5*(m_ptref.y + std::sqrt(3)*m_ptref.x);
+            m_ptref3.z = m_ptref.z;
+
             is_ref_positive = false; //outward (outside surface)
         }
     }
@@ -495,6 +515,8 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
     XDim3 ptmin = m_ptmin;
     XDim3 ptmax = m_ptmax;
     XDim3 ptref = m_ptref;
+    XDim3 ptref2 = m_ptref2;
+    XDim3 ptref3 = m_ptref3;
 
 
     Real reference_value = m_boundry_is_outside ? outside_value :  inside_value;
@@ -531,16 +553,26 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
             // Real pr[]={ptref.x, ptref.y, ptref.z};
 
             // EY: Use CGAL aabb tree 
-            // num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
-            // num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+10, ptref.y+10, ptref.z+10);
-            // num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+100, ptref.y+100, ptref.z+100);
+            num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+            num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref2.x, ptref2.y, ptref2.z);
+            num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref3.x, ptref3.y, ptref3.z);
             
-            // num_intersects = std::max({num_inter1, num_inter2, num_inter3});
-            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
-        }
-        if (num_intersects != 0)
-        {
-            amrex::Print() << "number of intersections = " << num_intersects << "\n";
+            if (num_inter1 == num_inter2)
+            {
+                num_intersects = num_inter1;
+            } else if (num_inter2 == num_inter3)
+            {
+                num_intersects = num_inter2;
+            } else if (num_inter3 == num_inter1)
+            {
+                num_intersects = num_inter3;
+            }
+            else 
+            {
+                num_intersects = num_inter1;
+            }
+
+            // num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
         }
         
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
@@ -588,6 +620,8 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
         XDim3 ptmin = m_ptmin;
         XDim3 ptmax = m_ptmax;
         XDim3 ptref = m_ptref;
+        XDim3 ptref2 = m_ptref2;
+        XDim3 ptref3 = m_ptref3;
         int ref_value = m_boundry_is_outside ? 1 : 0;
 
         // EY: Timing for line-search
@@ -617,15 +651,29 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
                 coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
                 coords[2] >= ptmin.z && coords[2] <= ptmax.z)
             {
+                // Real pr[]={ptref.x, ptref.y, ptref.z};
+
                 // EY: Use CGAL aabb tree 
-                // num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
-                // num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+10, ptref.y+10, ptref.z+10);
-                // num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+100, ptref.y+100, ptref.z+100);
-            
-                // num_intersects = std::max({num_inter1, num_inter2, num_inter3});    
+                num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+                num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref2.x, ptref2.y, ptref2.z);
+                num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref3.x, ptref3.y, ptref3.z);
+                
+                if (num_inter1 == num_inter2)
+                {
+                    num_intersects = num_inter1;
+                } else if (num_inter2 == num_inter3)
+                {
+                    num_intersects = num_inter2;
+                } else if (num_inter3 == num_inter1)
+                {
+                    num_intersects = num_inter3;
+                }
+                else 
+                {
+                    num_intersects = num_inter1;
+                }
 
-                num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
-
+                // num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
             }
             return (num_intersects % 2 == 0) ? ref_value : 1-ref_value;
         });
