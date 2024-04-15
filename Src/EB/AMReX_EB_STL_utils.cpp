@@ -482,8 +482,6 @@ STLtools::prepare ()
 }
 
 // EY: For CGAL -- Ray shooting-- connected to STLtools::fill--see below
-
-
 void
 STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
                 Real outside_value, Real inside_value) const
@@ -521,26 +519,30 @@ STLtools::fill (MultiFab& mf, IntVect const& nghost, Geometry const& geom,
 #else
         coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
-        int num_intersects=0;        
+        int num_intersects = 0;     
+        int num_inter1 = 0;
+        int num_inter2 = 0;
+        int num_inter3 = 0;    
 
         if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
             coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
             coords[2] >= ptmin.z && coords[2] <= ptmax.z)
         {
-            Real pr[]={ptref.x, ptref.y, ptref.z};
+            // Real pr[]={ptref.x, ptref.y, ptref.z};
 
             // EY: Use CGAL aabb tree 
-            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+            // num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+            // num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+10, ptref.y+10, ptref.z+10);
+            // num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+100, ptref.y+100, ptref.z+100);
             
-            // // //Original line search for ALL triangle
-            // for (int tr=0; tr < num_triangles; ++tr) {
-            //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
-            //         ++num_intersects;
-            //     }
-            // }
-
+            // num_intersects = std::max({num_inter1, num_inter2, num_inter3});
+            num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
         }
-        // amrex::Print() << "number of intersections = " << num_intersects << "\n";
+        if (num_intersects != 0)
+        {
+            amrex::Print() << "number of intersections = " << num_intersects << "\n";
+        }
+        
         ma[box_no](i,j,k) = (num_intersects % 2 == 0) ? reference_value : other_value;
     });
     // auto t1 = std::chrono::high_resolution_clock::now();
@@ -607,21 +609,23 @@ STLtools::getBoxType (Box const& box, Geometry const& geom, RunOn) const
             coords[2]=plo[2]+static_cast<Real>(k)*dx[2];
 #endif
             int num_intersects=0; 
+            int num_inter1 = 0;
+            int num_inter2 = 0;
+            int num_inter3 = 0;  
+
             if (coords[0] >= ptmin.x && coords[0] <= ptmax.x &&
                 coords[1] >= ptmin.y && coords[1] <= ptmax.y &&
                 coords[2] >= ptmin.z && coords[2] <= ptmax.z)
             {
-                Real pr[]={ptref.x, ptref.y, ptref.z};
-
                 // EY: Use CGAL aabb tree 
+                // num_inter1 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
+                // num_inter2 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+10, ptref.y+10, ptref.z+10);
+                // num_inter3 = getNumIntersect(coords[0], coords[1], coords[2], ptref.x+100, ptref.y+100, ptref.z+100);
+            
+                // num_intersects = std::max({num_inter1, num_inter2, num_inter3});    
+
                 num_intersects = getNumIntersect(coords[0], coords[1], coords[2], ptref.x, ptref.y, ptref.z);
 
-                // EY: replace this with CGAL
-                // for (int tr=0; tr < num_triangles; ++tr) {
-                //     if (line_tri_intersects(pr, coords, tri_pts[tr])) {
-                //         ++num_intersects;
-                //     }
-                // } 
             }
             return (num_intersects % 2 == 0) ? ref_value : 1-ref_value;
         });

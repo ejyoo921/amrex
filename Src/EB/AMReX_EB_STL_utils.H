@@ -59,7 +59,7 @@ private:
     int m_num_tri=0;
 
     XDim3 m_ptmin;  // All triangles are inside the bounding box defined by
-    XDim3 m_ptmax;  //     m_ptmin and m_ptmax.
+    XDim3 m_ptmax;  // m_ptmin and m_ptmax.
     XDim3 m_ptref;  // The reference point is slightly outside the bounding box.
     bool m_boundry_is_outside; // Is the bounding box boundary outside or inside the object?
 

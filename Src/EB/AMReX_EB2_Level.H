@@ -423,13 +423,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& ym2 = M2[1].array();
                 Array4<Real> const& zm2 = M2[2].array();
 
-                amrex::Print() << "HERE-Level" << "\n"; // EY
-
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
                                   xm2, ym2, zm2, dx, problo, cover_multiple_cuts);
-
-                amrex::Print() << "HERE-after build faces" << "\n"; // EY
 
                 cellflagtmp.resize(m_cellflag[mfi].box());
                 Elixir cellflagtmp_eli = cellflagtmp.elixir();
