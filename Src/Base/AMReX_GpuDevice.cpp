@@ -53,6 +53,20 @@ namespace {
 }
 #endif
 
+#ifdef AMREX_USE_HIP
+namespace {
+    __host__ __device__ void amrex_check_wavefront_size () {
+#ifdef __HIP_DEVICE_COMPILE__
+        // https://github.com/AMReX-Codes/amrex/issues/3792
+        // __AMDGCN_WAVEFRONT_SIZE is valid in device code only.
+        // Thus we have to check it this way.
+        static_assert(__AMDGCN_WAVEFRONT_SIZE == AMREX_AMDGCN_WAVEFRONT_SIZE,
+                      "Please let the amrex team know if you encounter this");
+#endif
+    }
+}
+#endif
+
 namespace amrex::Gpu {
 
 int Device::device_id = 0;
@@ -308,6 +322,14 @@ Device::Initialize ()
     nvtxRangePop();
 #endif
 
+#if defined(AMREX_USE_HIP)
+    if (num_devices_used < 0) {
+        // This test is always false, but it makes the compiler no longer
+        // complain about unused function, amrex_check_wavefront_size.
+        amrex::single_task(amrex_check_wavefront_size);
+    }
+#endif
+
     Device::profilerStart();
 
 #endif /* AMREX_USE_GPU */
@@ -364,13 +386,17 @@ Device::initialize_gpu ()
         AMREX_HIP_SAFE_CALL(hipStreamCreate(&gpu_stream_pool[i]));
     }
 
+#ifdef AMREX_GPU_STREAM_ALLOC_SUPPORT
+    AMREX_HIP_SAFE_CALL(hipDeviceGetAttribute(&memory_pools_supported, hipDeviceAttributeMemoryPoolsSupported, device_id));
+#endif
+
 #elif defined(AMREX_USE_CUDA)
     AMREX_CUDA_SAFE_CALL(cudaGetDeviceProperties(&device_prop, device_id));
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(device_prop.major >= 4 || (device_prop.major == 3 && device_prop.minor >= 5),
                                      "Compute capability must be >= 3.5");
 
-#ifdef AMREX_CUDA_GE_11_2
+#ifdef AMREX_GPU_STREAM_ALLOC_SUPPORT
     cudaDeviceGetAttribute(&memory_pools_supported, cudaDevAttrMemoryPoolsSupported, device_id);
 #endif
 

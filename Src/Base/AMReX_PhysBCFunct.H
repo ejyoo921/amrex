@@ -153,6 +153,8 @@ public:
 
         BL_PROFILE("PhysBCFunct::()");
 
+        AMREX_ASSERT(nghost.allLE(mf.nGrowVect()));
+
         //! create a grown domain box containing valid + periodic cells
         const Box& domain = m_geom.Domain();
         Box gdomain = amrex::convert(domain, mf.boxArray().ixType());
@@ -170,7 +172,7 @@ public:
             for (MFIter mfi(mf); mfi.isValid(); ++mfi)
             {
                 FArrayBox& dest = mf[mfi];
-                const Box& bx = mfi.fabbox();
+                const Box& bx = grow(mfi.validbox(),nghost);
 
                 //! if there are cells not in the valid + periodic grown box
                 //! we need to fill them here
