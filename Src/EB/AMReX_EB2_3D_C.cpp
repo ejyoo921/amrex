@@ -767,6 +767,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             });
         } else {
             //EY: Let's see the location of multicuts before aborting!
+            amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
+            amrex::Print() << "Final *hp = " << *hp << "\n";
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }
