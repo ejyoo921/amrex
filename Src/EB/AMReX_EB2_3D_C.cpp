@@ -371,7 +371,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  Array4<Real> const& m2z,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
-                 bool cover_multiple_cuts) noexcept
+                 bool cover_multiple_cuts,
+                 bool plt_multiple_cuts) noexcept
 {
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
@@ -823,7 +824,13 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             //EY: Let's see the location of multicuts before aborting!
             amrex::Print() << "dx = " << dx[0] << ", dy = " << dx[1] << ", dz = " << dx[2] << "\n";
             amrex::Print() << "Total number of multicut cells = " << *hp << "\n";
-            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+
+            if (plt_multiple_cuts){
+                amrex::Print() << "Creating outputs for multicut locations." << "\n";
+            }
+            else{
+                amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+            }
         }
     }
 
@@ -842,7 +849,7 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
                   Array4<Real> const& barea, Array4<Real> const& bcent,
                   Array4<Real> const& bnorm, Array4<EBCellFlag> const& ctmp,
                   Array4<Real> const& levset, Real small_volfrac, Geometry const& geom,
-                  bool extend_domain_face, bool cover_multiple_cuts,
+                  bool extend_domain_face, bool cover_multiple_cuts, bool plt_multiple_cuts,
                   int& nsmallcells, int& nmulticuts) noexcept
 {
     Gpu::Buffer<int> n_smallcell_multicuts = {0,0};
@@ -987,7 +994,12 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
 
     if (nsmallcells > 0 || nmulticuts > 0) {
         if (!cover_multiple_cuts && nmulticuts > 0) {
-            amrex::Abort("amrex::EB2::build_cells: multi-cuts not supported");
+            if (plt_multiple_cuts){
+                amrex::Print() << "Passing EB2::build_cells" << "\n";
+            }
+            else{
+                amrex::Abort("amrex::EB2::build_cells: multi-cuts not supported");
+            }
         }
         return;
     } else {

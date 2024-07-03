@@ -55,7 +55,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  Array4<Real> const& m2z,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
-                 bool cover_multiple_cuts) noexcept;
+                 bool cover_multiple_cuts,
+                 bool plt_multiple_cuts) noexcept; //EY
 
 void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
                   Array4<Type_t> const& fx, Array4<Type_t> const& fy,
@@ -69,7 +70,7 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
                   Array4<Real> const& barea, Array4<Real> const& bcent,
                   Array4<Real> const& bnorm, Array4<EBCellFlag> const& ctmp,
                   Array4<Real> const& levset, Real small_volfrac, Geometry const& geom,
-                  bool extend_domain_face, bool cover_multiple_cuts,
+                  bool extend_domain_face, bool cover_multiple_cuts, bool plt_multiple_cuts, //EY
                   int& nsmallcells, int& nmulticuts) noexcept;
 
 void set_connection_flags(Box const& bx, Box const& bxg1,

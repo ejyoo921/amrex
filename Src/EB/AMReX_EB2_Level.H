@@ -167,12 +167,14 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     Real small_volfrac = 1.e-14;
 #endif
     bool cover_multiple_cuts = false;
+    bool plt_multiple_cuts = false; //EY
     int maxiter = 32;
     {
         ParmParse pp("eb2");
         pp.queryAdd("small_volfrac", small_volfrac);
         pp.queryAdd("cover_multiple_cuts", cover_multiple_cuts);
         pp.queryAdd("maxiter", maxiter);
+        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts); //EY
     }
     maxiter = std::min(100000, maxiter);
 
@@ -315,6 +317,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     amrex::ignore_unused(hybrid);
 
     int iter = 0;
+    int total_multicuts = 0; //EY
     for (; iter < maxiter; ++iter)
     {
         int nsmallcells = 0;
@@ -415,7 +418,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
 
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
-                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts);
+                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts, plt_multiple_cuts);
 
                 cellflagtmp.resize(m_cellflag[mfi].box());
                 Elixir cellflagtmp_eli = cellflagtmp.elixir();
@@ -424,7 +427,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 build_cells(vbx, cfg, ftx, fty, ftz, apx, apy, apz,
                             fcx, fcy, fcz, xm2, ym2, zm2, dx, vfr, ctr,
                             bar, bct, bnm, cfgtmp, lst,
-                            small_volfrac, geom, extend_domain_face, cover_multiple_cuts,
+                            small_volfrac, geom, extend_domain_face, cover_multiple_cuts, plt_multiple_cuts,
                             nsm, nmc);
 
                 // Because it is used in a synchronous reduction kernel in
@@ -496,6 +499,11 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 }
             }
         }
+        total_multicuts = total_multicuts + nmulticuts;
+    }
+    if (plt_multiple_cuts){
+        amrex::Print() << "Grand total multicuts = " << total_multicuts << "\n";
+        amrex::Abort("EY: amrex::EB2::build_faces: more than 2 cuts not supported"); // move this 
     }
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(iter < maxiter, "EB: failed to fix small cells");
