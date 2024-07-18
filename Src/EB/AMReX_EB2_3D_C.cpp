@@ -464,23 +464,28 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                // EY: write plot file *just for the locations of multi-cuts------------------------------------
-                amrex::MFIter::allowMultipleMFIters(true);
-                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
-                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
-                Geometry geom(xbx,real_box,CoordSys::cartesian,{0,0,0});
-                BoxArray ba(xbx);
-                DistributionMapping dm(ba); 
-                
-                MultiFab flag_xbx;
-                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
-                int nghost = 1;
-                flag_xbx.define(nodal_ba, dm, 1, nghost);
+                if (plt_multiple_cuts){
+                    // EY: Write txt file to for multicuts index
+                    const std::string& datafilename = amrex::Concatenate("index_multicuts", *hp);
+                    amrex::PrintToFile(datafilename) << "fx(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                    // EY: write plot file *just for the locations of multi-cuts------------------------------------
+                    amrex::MFIter::allowMultipleMFIters(true);
+                    RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                        {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+                    Geometry geom(xbx,real_box,CoordSys::cartesian,{0,0,0});
+                    BoxArray ba(xbx);
+                    DistributionMapping dm(ba); 
+                    
+                    MultiFab flag_xbx;
+                    BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                    int nghost = 1;
+                    flag_xbx.define(nodal_ba, dm, 1, nghost);
 
-                std::string m_plot_file{"plt.x."};
-                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
-                WriteSingleLevelPlotfile(plotfilename, flag_xbx, {"marker_x"}, geom, 0.0, 0);
-                // Finished plot file ----------------------------------------------------------------------------
+                    // std::string m_plot_file{"plt."};
+                    const std::string& plotfilename = amrex::Concatenate("plt", *hp);
+                    WriteSingleLevelPlotfile(plotfilename, flag_xbx, {"marker_x"}, geom, 0.0, 0);
+                    // Finished plot file ----------------------------------------------------------------------------
+                }
             }
 
             if ((ncuts > 2) || (lym <= small && lyp <= small && lzm <= small && lzp <= small)) {
@@ -589,23 +594,28 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                // EY: write plot file *just for the locations of multi-cuts------------------------------------
-                amrex::MFIter::allowMultipleMFIters(true);
-                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
-                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
-                Geometry geom(ybx,real_box,CoordSys::cartesian,{0,0,0});
-                BoxArray ba(ybx);
-                DistributionMapping dm(ba); 
-                
-                MultiFab flag_ybx;
-                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
-                int nghost = 1;
-                flag_ybx.define(nodal_ba, dm, 1, nghost);
+                if (plt_multiple_cuts){
+                    // EY: Write txt file to for multicuts index
+                    const std::string& datafilename = amrex::Concatenate("index_multicuts", *hp);
+                    amrex::PrintToFile(datafilename) << "fy(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                    // EY: write plot file *just for the locations of multi-cuts------------------------------------
+                    amrex::MFIter::allowMultipleMFIters(true);
+                    RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                        {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+                    Geometry geom(ybx,real_box,CoordSys::cartesian,{0,0,0});
+                    BoxArray ba(ybx);
+                    DistributionMapping dm(ba); 
+                    
+                    MultiFab flag_ybx;
+                    BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                    int nghost = 1;
+                    flag_ybx.define(nodal_ba, dm, 1, nghost);
 
-                std::string m_plot_file{"plt.y."};
-                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
-                WriteSingleLevelPlotfile(plotfilename, flag_ybx, {"marker_y"}, geom, 0.0, 0);
-                // Finished plot file ----------------------------------------------------------------------------
+                    // std::string m_plot_file{"plt."};
+                    const std::string& plotfilename = amrex::Concatenate("plt", *hp);
+                    WriteSingleLevelPlotfile(plotfilename, flag_ybx, {"marker_y"}, geom, 0.0, 0);
+                    // Finished plot file ----------------------------------------------------------------------------
+                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lzm <= small && lzp <= small)) {
@@ -714,23 +724,28 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                // EY: write plot file *just for the locations of multi-cuts------------------------------------
-                amrex::MFIter::allowMultipleMFIters(true);
-                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
-                    {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
-                Geometry geom(zbx,real_box,CoordSys::cartesian,{0,0,0});
-                BoxArray ba(zbx);
-                DistributionMapping dm(ba); 
-                
-                MultiFab flag_zbx;
-                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
-                int nghost = 1;
-                flag_zbx.define(nodal_ba, dm, 1, nghost);
+                if (plt_multiple_cuts){
+                    // EY: Write txt file to for multicuts index
+                    const std::string& datafilename = amrex::Concatenate("index_multicuts", *hp);
+                    amrex::PrintToFile(datafilename) << "fz(i,j,k) index: (i,j,k) = (" << i << "," << j << "," << k << ")  \n";
+                    // EY: write plot file *just for the locations of multi-cuts------------------------------------
+                    amrex::MFIter::allowMultipleMFIters(true);
+                    RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                        {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+                    Geometry geom(zbx,real_box,CoordSys::cartesian,{0,0,0});
+                    BoxArray ba(zbx);
+                    DistributionMapping dm(ba); 
+                    
+                    MultiFab flag_zbx;
+                    BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                    int nghost = 1;
+                    flag_zbx.define(nodal_ba, dm, 1, nghost);
 
-                std::string m_plot_file{"plt.z."};
-                const std::string& plotfilename = amrex::Concatenate(m_plot_file, *hp);
-                WriteSingleLevelPlotfile(plotfilename, flag_zbx, {"marker_z"}, geom, 0.0, 0);
-                // Finished plot file ----------------------------------------------------------------------------
+                    // std::string m_plot_file{"plt"};
+                    const std::string& plotfilename = amrex::Concatenate("plt", *hp);
+                    WriteSingleLevelPlotfile(plotfilename, flag_zbx, {"marker_z"}, geom, 0.0, 0);
+                    // Finished plot file ----------------------------------------------------------------------------
+                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lym <= small && lyp <= small)) {

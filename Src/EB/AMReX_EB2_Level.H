@@ -503,7 +503,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     }
     if (plt_multiple_cuts){
         amrex::Print() << "Grand total multicuts = " << total_multicuts << "\n";
-        amrex::Abort("EY: amrex::EB2::build_faces: more than 2 cuts not supported"); // move this 
+        amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); // move this 
     }
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(iter < maxiter, "EB: failed to fix small cells");
