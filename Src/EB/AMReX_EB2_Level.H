@@ -15,6 +15,9 @@
 #include <AMReX_EB2_C.H>
 #include <AMReX_EB2_IF_AllRegular.H>
 
+//EY: Plotting
+#include <AMReX_PlotFileUtil.H>
+
 #ifdef AMREX_USE_OMP
 #include <omp.h>
 #endif
@@ -479,6 +482,27 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 nsmallcells += nsm;
                 nmulticuts  += nmc;
             }
+            // EY: Here -> make plot file
+            if (plt_multiple_cuts){
+                amrex::Print() << "Nmulticuts = " << nmulticuts << "\n";
+                // Output: plotfiles
+                int i = 1;  int j = 1;  int k = 1;
+                RealBox real_box({AMREX_D_DECL(problo[0]+(i)*dx[0], problo[1]+(j)*dx[1], problo[2]+(k)*dx[2])},
+                            {AMREX_D_DECL(problo[0]+(i+1)*dx[0], problo[1]+(j+1)*dx[1], problo[2]+(k+1)*dx[2])});
+                
+                Geometry geom(domain, real_box, CoordSys::cartesian,{0,0,0});
+                BoxArray ba(domain);
+                BoxArray nodal_ba = amrex::convert(ba, IntVect::TheNodeVector());
+                DistributionMapping dm(ba); 
+
+                int nghost = 1;
+                MultiFab flag_xbx;
+                flag_xbx.define(nodal_ba, dm, 1, nghost);
+                const std::string& plotfilename = amrex::Concatenate("plt", total_multicuts);
+                WriteSingleLevelPlotfile(plotfilename, flag_xbx, {"marker_x"}, geom, 0.0, 0);
+
+                amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); // move this 
+            }
         }
 
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
@@ -500,10 +524,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
             }
         }
         total_multicuts = total_multicuts + nmulticuts;
-    }
-    if (plt_multiple_cuts){
-        amrex::Print() << "Grand total multicuts = " << total_multicuts << "\n";
-        amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); // move this 
     }
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(iter < maxiter, "EB: failed to fix small cells");
