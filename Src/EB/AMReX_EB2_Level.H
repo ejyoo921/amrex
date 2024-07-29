@@ -326,7 +326,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     amrex::ignore_unused(hybrid);
 
     int iter = 0;
-    int total_multicuts = 0; //EY
     for (; iter < maxiter; ++iter)
     {
         int nsmallcells = 0;
@@ -517,7 +516,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 }
             }
         }
-        total_multicuts = total_multicuts + nmulticuts;
     }
 
     AMREX_ALWAYS_ASSERT_WITH_MESSAGE(iter < maxiter, "EB: failed to fix small cells");
