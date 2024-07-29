@@ -492,21 +492,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 nmulticuts  += nmc;
             }
             // EY: Here -> make plot file
-            if (plt_multiple_cuts){
-                for (MFIter mfi(m_mgf); mfi.isValid(); ++mfi)
-                {
-                    AMREX_HOST_DEVICE_FOR_3D ( domain_grown, i, j, k,
-                    {
-                        Array4<Real> const& multicut_arr = multicut_bx.array(mfi);
-                        if (multicut_arr(i,j,k) > 1) // Need to fix this condition
-                        {
-                            amrex::Print() << "Multicut array = (" << i << ", " << j << ", " << k << ") \n";
-                        }
-                    });
-                }
-                // Output: plotfiles
+            if (plt_multiple_cuts)
+            {
                 WriteSingleLevelPlotfile("plt", multicut_bx, {"multicut"}, geom, 0.0, 0);
-
                 amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
             }
         }

@@ -466,7 +466,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
                     multicut_arr(i,j,k) = 10.0;
-                    amrex::Print() << "Multicut array (i,j,k) = (" << i << ", " << j << ", " << k << ") " << "\n";
                     // Not GPU friendly
                     amrex::PrintToFile("loc_multicuts") << "fx: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                 }
