@@ -372,7 +372,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
                  bool cover_multiple_cuts,
-                 bool plt_multiple_cuts) noexcept
+                 bool plt_multiple_cuts, Array4<Real> const& multicut_arr) noexcept
 {
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
@@ -465,6 +465,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
+                    multicut_arr(i,j,k) = 10.0;
+                    amrex::Print() << "Multicut array (i,j,k) = (" << i << ", " << j << ", " << k << ") " << "\n";
                     // Not GPU friendly
                     amrex::PrintToFile("loc_multicuts") << "fx: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                 }
@@ -577,6 +579,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
+                    multicut_arr(i,j,k) = 10.0;
                     // Not GPU friendly
                     amrex::PrintToFile("loc_multicuts") << "fy: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                 }
@@ -689,6 +692,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
+                    multicut_arr(i,j,k) = 10.0;
                     // Not GPU friendly
                     amrex::PrintToFile("loc_multicuts") << "fz: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                 }

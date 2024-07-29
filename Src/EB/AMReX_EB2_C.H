@@ -56,7 +56,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
                  bool cover_multiple_cuts,
-                 bool plt_multiple_cuts) noexcept; //EY
+                 bool plt_multiple_cuts, Array4<Real> const& multicut_arr) noexcept; //EY
 
 void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
                   Array4<Type_t> const& fx, Array4<Type_t> const& fy,
