@@ -102,7 +102,7 @@ protected:
     IndexSpace const* m_parent;
 
     //EY
-    MultiFab multicut_bx;
+    MultiFab multicut_count;
 
 private:
     template <typename G> friend class GShopLevel;
@@ -299,7 +299,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndrynorm.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     //EY
-    multicut_bx.define(m_grids, m_dmap, 1, ng, mf_info);
+    multicut_count.define(m_grids, m_dmap, 1, ng, mf_info);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         m_areafrac[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
@@ -366,7 +366,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& bct = m_bndrycent.array(mfi);
                 Array4<Real> const& bnm = m_bndrynorm.array(mfi);
                 //EY:
-                Array4<Real> const& multicut_arr = multicut_bx.array(mfi);
+                Array4<Real> const& multicut_arr = multicut_count.array(mfi);
 
                 AMREX_D_TERM(Array4<Real> const& apx = m_areafrac[0].array(mfi);,
                              Array4<Real> const& apy = m_areafrac[1].array(mfi);,
@@ -493,7 +493,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
             // EY: Here -> make plot file
             if (plt_multiple_cuts)
             {
-                WriteSingleLevelPlotfile("plt", multicut_bx, {"multicut"}, geom, 0.0, 0);
+                WriteSingleLevelPlotfile("plt", multicut_count, {"multicut"}, geom, 0.0, 0);
                 amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
             }
         }
