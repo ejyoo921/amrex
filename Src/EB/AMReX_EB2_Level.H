@@ -309,6 +309,10 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                 m_dmap, 1, ng, mf_info);
         m_facecent[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
+        // EY: multicuts------------------------------------------------------------------------
+        multicut_face[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
+                                m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
+        //--------------------------------------------------------------------------------------
         IntVect edge_type{1}; edge_type[idim] = 0;
         m_edgecent[idim].define(amrex::convert(m_grids, edge_type), m_dmap, 1, ng, mf_info);
     }
