@@ -372,7 +372,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
                  bool cover_multiple_cuts,
-                 bool plt_multiple_cuts, Array4<Real> const& multicut_arr) noexcept
+                 bool plt_multiple_cuts, Array4<Real> const& mt_fcx, Array4<Real> const& mt_fcy, Array4<Real> const& mt_fcz) noexcept
 {
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
@@ -388,7 +388,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     const Real dzinv = 1.0_rt/dx[2];
 
     const Box& xbx = amrex::grow(amrex::surroundingNodes(bx,0),1);
-    AMREX_HOST_DEVICE_FOR_3D ( xbx, i, j, k,
+    AMREX_HOST_DEVICE_FOR_3D ( xbx, i, j, k, // this is face index
     {
         if (fx(i,j,k) == Type::regular) {
             apx(i,j,k) = 1.0_rt;
@@ -465,9 +465,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    multicut_arr(i,j,k) = ncuts;
+                    mt_fcx(i,j,k,0) = 10.0;
 
-                    #ifdef AMREX_USE_GPU
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") << "fx: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
@@ -580,9 +580,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    multicut_arr(i,j,k) = ncuts;
+                    mt_fcy(i,j,k,0) = 10.0;
 
-                    #ifdef AMREX_USE_GPU
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") << "fy: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
@@ -695,9 +695,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    multicut_arr(i,j,k) = ncuts;
+                    mt_fcz(i,j,k,0) = 10.0;
 
-                    #ifdef AMREX_USE_GPU
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") << "fz: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
