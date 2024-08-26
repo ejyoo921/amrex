@@ -1,5 +1,5 @@
 #include <AMReX_EB2_C.H>
-//EY
+
 #include <AMReX_MultiFab.H> 
 #include <AMReX_PlotFileUtil.H>
 
@@ -468,7 +468,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcx(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "fx: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        amrex::PrintToFile("loc_multicuts") << "xbx = " << xbx <<  "\n";
+                        amrex::PrintToFile("loc_multicuts") << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -583,7 +585,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcy(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "fy: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        amrex::PrintToFile("loc_multicuts") << "ybx = " << ybx <<  "\n";
+                        amrex::PrintToFile("loc_multicuts") << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -698,7 +702,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcz(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "fz: (x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        amrex::PrintToFile("loc_multicuts") << "zbx = " << zbx <<  "\n";
+                        amrex::PrintToFile("loc_multicuts") << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -791,14 +797,14 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 }
             });
         } else {
-            //EY: Let's see the location of multicuts before aborting!
+            // Passing now to plot the location of multicuts before aborting!
             amrex::Print() << "Total number of multicut cells = " << *hp << "\n";
 
             if (plt_multiple_cuts){
-                amrex::Print() << "Creating outputs for multicut locations." << "\n";
+                amrex::Print() << "Creating outputs for multicut locations..." << "\n";
             }
             else{
-                amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+                amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported!");
             }
         }
     }

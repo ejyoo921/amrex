@@ -101,10 +101,6 @@ protected:
     bool m_has_eb_info = true;
     IndexSpace const* m_parent;
 
-    //EY
-    Vector<MultiFab> multicut_mf; // test in progress
-    Array<MultiFab,AMREX_SPACEDIM> multicut_face; // store on face-centered
-
     MultiFab multicut_fcx;
     MultiFab multicut_fcy;
     MultiFab multicut_fcz;
@@ -303,10 +299,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     m_bndryarea.define(m_grids, m_dmap, 1, ng, mf_info);
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndrynorm.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
-    //EY
-    // amrex::Print() << "MAKE VECTOR MULTIFAB MF" << "\n";
-    // multicut_mf[0].define(m_grids, m_dmap, 1, 0, mf_info, MultiCutFab()); // this should be a leveldata
-    // amrex::Print() << "AFTER VECTOR MULTIFAB MF" << "\n";
 
     multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info); //this is cell-centered values storage
     multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info); // need to be fora similar to m_areafrac
@@ -317,10 +309,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                 m_dmap, 1, ng, mf_info);
         m_facecent[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
-        // EY: multicuts------------------------------------------------------------------------
-        multicut_face[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
-                                m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
-        //--------------------------------------------------------------------------------------
         IntVect edge_type{1}; edge_type[idim] = 0;
         m_edgecent[idim].define(amrex::convert(m_grids, edge_type), m_dmap, 1, ng, mf_info);
     }
@@ -380,16 +368,10 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& bar = m_bndryarea.array(mfi);
                 Array4<Real> const& bct = m_bndrycent.array(mfi);
                 Array4<Real> const& bnm = m_bndrynorm.array(mfi);
-                //EY: multicuts-------------------------------------------------------
-                //Individual MFs
+
                 Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
                 Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
                 Array4<Real> const& multicut_arr_z = multicut_fcz.array(mfi);
-                //face center MF
-                AMREX_D_TERM(Array4<Real> const& mt_fcx = multicut_face[0].array(mfi);,
-                             Array4<Real> const& mt_fcy = multicut_face[1].array(mfi);,
-                             Array4<Real> const& mt_fcz = multicut_face[2].array(mfi););
-                //----------------------------------------------------------------------
 
                 AMREX_D_TERM(Array4<Real> const& apx = m_areafrac[0].array(mfi);,
                              Array4<Real> const& apy = m_areafrac[1].array(mfi);,
@@ -516,12 +498,11 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         }
 
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
-        // EY: Here -> make plot file
-        if (plt_multiple_cuts)
+
+        if (plt_multiple_cuts && nmulticuts > 0)
         {
-            int finest_level = 0;
-            int lev = finest_level;
-            amrex::Print() << "MAKE PLOT FILE FOR MULTICUTS" << "\n";
+            amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n"; 
+            amrex::Print() << "plotting multicut locations..." << "\n";
 
             WriteSingleLevelPlotfile("plt.x", multicut_fcx, {"multicut_x"}, geom, 0.0, 0);
             WriteSingleLevelPlotfile("plt.y", multicut_fcy, {"multicut_y"}, geom, 0.0, 0);
