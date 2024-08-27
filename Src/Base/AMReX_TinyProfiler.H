@@ -5,14 +5,6 @@
 #include <AMReX_INT.H>
 #include <AMReX_REAL.H>
 
-#ifdef AMREX_USE_CUDA
-#include <nvToolsExt.h>
-#endif
-
-#if defined(AMREX_USE_HIP) && defined(AMREX_USE_ROCTX)
-#include <roctracer/roctx.h>
-#endif
-
 #include <array>
 #include <deque>
 #include <iosfwd>
@@ -143,15 +135,19 @@ private:
     static std::deque<std::tuple<double,double,std::string*> > ttstack;
     static std::map<std::string,std::map<std::string, Stats> > statsmap;
     static double t_init;
-    static int device_synchronize_around_region;
+    static bool device_synchronize_around_region;
     static int n_print_tabs;
     static int verbose;
     static double print_threshold;
+    static bool enabled;
+    static bool memprof_enabled;
+    static std::string output_file;
 
-    static void PrintStats (std::map<std::string,Stats>& regstats, double dt_max);
+    static void PrintStats (std::map<std::string,Stats>& regstats, double dt_max,
+                            std::ostream* os);
     static void PrintMemStats (std::map<std::string, MemStat>& memstats,
                                std::string const& memname, double dt_max,
-                               double t_final);
+                               double t_final, std::ostream* os);
 };
 
 class TinyProfileRegion
