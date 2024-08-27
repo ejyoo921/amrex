@@ -377,6 +377,10 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
     int* dp = nmulticuts.data();
+    // delete the previous dat_multicuts.txt file 
+    std::ofstream ofs;
+    ofs.open("dat_multicuts.txt", std::ofstream::out | std::ofstream::trunc);
+    ofs.close();
 
 #ifdef AMREX_USE_FLOAT
     constexpr Real small = 1.e-5_rt;
@@ -468,9 +472,16 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcx(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "xbx = " << xbx <<  "\n";
-                        amrex::PrintToFile("loc_multicuts") << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                        fout << "xbx = " << xbx <<  std::endl;
+                        fout << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << 
+                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                                << std::endl;
+                        
+                        // amrex::PrintToFile("loc_multicuts") << "xbx = " << xbx <<  "\n";
+                        // amrex::PrintToFile("loc_multicuts") << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -585,9 +596,15 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcy(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "ybx = " << ybx <<  "\n";
-                        amrex::PrintToFile("loc_multicuts") << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                        fout << "ybx = " << ybx <<  std::endl;
+                        fout << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << 
+                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                                << std::endl;
+                        // amrex::PrintToFile("loc_multicuts") << "ybx = " << ybx <<  "\n";
+                        // amrex::PrintToFile("loc_multicuts") << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -702,9 +719,15 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                     mt_fcz(i,j,k,0) = 10.0;
 
                     #ifndef AMREX_USE_GPU
-                        amrex::PrintToFile("loc_multicuts") << "zbx = " << zbx <<  "\n";
-                        amrex::PrintToFile("loc_multicuts") << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
+                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                        fout << "zbx = " << zbx <<  std::endl;
+                        fout << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                                << "(x,y,z) = (" << 
+                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                                << std::endl;
+                        // amrex::PrintToFile("loc_multicuts") << "zbx = " << zbx <<  "\n";
+                        // amrex::PrintToFile("loc_multicuts") << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
                     #endif
                 }
             }
@@ -798,8 +821,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             });
         } else {
             // Passing now to plot the location of multicuts before aborting!
-            amrex::Print() << "Total number of multicut cells = " << *hp << "\n";
-
             if (plt_multiple_cuts){
                 amrex::Print() << "Creating outputs for multicut locations..." << "\n";
             }

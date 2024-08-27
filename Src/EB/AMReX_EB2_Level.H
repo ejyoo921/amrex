@@ -15,7 +15,6 @@
 #include <AMReX_EB2_C.H>
 #include <AMReX_EB2_IF_AllRegular.H>
 
-//EY: Plotting
 #include <AMReX_PlotFileUtil.H>
 
 #ifdef AMREX_USE_OMP
@@ -174,14 +173,14 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     Real small_volfrac = 1.e-14;
 #endif
     bool cover_multiple_cuts = false;
-    bool plt_multiple_cuts = false; //EY
+    bool plt_multiple_cuts = false; 
     int maxiter = 32;
     {
         ParmParse pp("eb2");
         pp.queryAdd("small_volfrac", small_volfrac);
         pp.queryAdd("cover_multiple_cuts", cover_multiple_cuts);
         pp.queryAdd("maxiter", maxiter);
-        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts); //EY
+        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts); 
     }
     maxiter = std::min(100000, maxiter);
 
@@ -300,19 +299,15 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndrynorm.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
 
-    multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info); //this is cell-centered values storage
-    multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info); // need to be fora similar to m_areafrac
-    multicut_fcz.define(m_grids, m_dmap, 1, ng, mf_info); // should be a face-centered boxes
+    multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info); 
+    multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info); 
+    multicut_fcz.define(m_grids, m_dmap, 1, ng, mf_info); 
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         m_areafrac[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, 1, ng, mf_info);
         m_facecent[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
-        // EY: multicuts------------------------------------------------------------------------
-        multicut_face[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
-                                m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
-        //--------------------------------------------------------------------------------------
         IntVect edge_type{1}; edge_type[idim] = 0;
         m_edgecent[idim].define(amrex::convert(m_grids, edge_type), m_dmap, 1, ng, mf_info);
     }
