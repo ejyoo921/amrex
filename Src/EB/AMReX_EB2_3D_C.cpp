@@ -377,10 +377,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
     int* dp = nmulticuts.data();
-    // delete the previous dat_multicuts.txt file 
-    std::ofstream ofs;
-    ofs.open("dat_multicuts.txt", std::ofstream::out | std::ofstream::trunc);
-    ofs.close();
 
 #ifdef AMREX_USE_FLOAT
     constexpr Real small = 1.e-5_rt;
@@ -471,12 +467,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcx(i,j,k,0) = 10.0;
 
-                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                    fout << "xbx = " << xbx <<  std::endl;
-                    fout << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                    amrex::PrintToFile("loc_multicuts") 
+                    << "xbx = " << xbx <<  "\n"
+                    << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
                             << "(x,y,z) = (" << 
                             problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                            << std::endl;
+                            << "\n";
                 }
             }
 
@@ -589,12 +585,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcy(i,j,k,0) = 10.0;
 
-                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                    fout << "ybx = " << ybx <<  std::endl;
-                    fout << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                    amrex::PrintToFile("loc_multicuts") 
+                    << "ybx = " << ybx <<  "\n"
+                    << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
                             << "(x,y,z) = (" << 
                             problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                            << std::endl;
+                            << "\n";
                 }
             }
 
@@ -707,12 +703,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcz(i,j,k,0) = 10.0;
 
-                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                    fout << "zbx = " << zbx <<  std::endl;
-                    fout << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                    amrex::PrintToFile("loc_multicuts") 
+                    << "zbx = " << zbx <<  "\n"
+                    << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
                             << "(x,y,z) = (" << 
                             problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                            << std::endl;
+                            << "\n";
                 }
             }
 
