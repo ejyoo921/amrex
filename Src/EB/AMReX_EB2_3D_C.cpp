@@ -471,18 +471,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcx(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_GPU
-                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                        fout << "xbx = " << xbx <<  std::endl;
-                        fout << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << 
-                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                                << std::endl;
-                        
-                        // amrex::PrintToFile("loc_multicuts") << "xbx = " << xbx <<  "\n";
-                        // amrex::PrintToFile("loc_multicuts") << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
-                    #endif
+                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                    fout << "xbx = " << xbx <<  std::endl;
+                    fout << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                            << "(x,y,z) = (" << 
+                            problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                            << std::endl;
                 }
             }
 
@@ -595,17 +589,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcy(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_GPU
-                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                        fout << "ybx = " << ybx <<  std::endl;
-                        fout << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << 
-                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                                << std::endl;
-                        // amrex::PrintToFile("loc_multicuts") << "ybx = " << ybx <<  "\n";
-                        // amrex::PrintToFile("loc_multicuts") << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
-                    #endif
+                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                    fout << "ybx = " << ybx <<  std::endl;
+                    fout << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                            << "(x,y,z) = (" << 
+                            problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                            << std::endl;
                 }
             }
 
@@ -718,17 +707,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcz(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_GPU
-                        std::ofstream fout("dat_multicuts.txt", std::ios::app); 
-                        fout << "zbx = " << zbx <<  std::endl;
-                        fout << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                                << "(x,y,z) = (" << 
-                                problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
-                                << std::endl;
-                        // amrex::PrintToFile("loc_multicuts") << "zbx = " << zbx <<  "\n";
-                        // amrex::PrintToFile("loc_multicuts") << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
-                        //         << "(x,y,z) = (" << problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")  \n";
-                    #endif
+                    std::ofstream fout("dat_multicuts.txt", std::ios::app); 
+                    fout << "zbx = " << zbx <<  std::endl;
+                    fout << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
+                            << "(x,y,z) = (" << 
+                            problo[0]+(i)*dx[0] << ","<< problo[1]+(j)*dx[1] << "," << problo[2]+(k)*dx[2] << ")" 
+                            << std::endl;
                 }
             }
 
