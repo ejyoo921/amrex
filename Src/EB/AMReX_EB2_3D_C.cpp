@@ -467,7 +467,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcx(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_OPM
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") 
                         << "xbx = " << xbx <<  "\n"
                         << "-> fx: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
@@ -587,7 +587,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcy(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_OPM
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") 
                         << "ybx = " << ybx <<  "\n"
                         << "-> fy: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
@@ -707,7 +707,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (plt_multiple_cuts){
                     mt_fcz(i,j,k,0) = 10.0;
 
-                    #ifndef AMREX_USE_OPM
+                    #ifndef AMREX_USE_GPU
                         amrex::PrintToFile("loc_multicuts") 
                         << "zbx = " << zbx <<  "\n"
                         << "-> fz: (i,j,k) = (" << i << ","<< j << "," << k << ") / " 
