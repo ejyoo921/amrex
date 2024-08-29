@@ -106,7 +106,6 @@ protected:
 
 private:
     template <typename G> friend class GShopLevel;
-
     // Need this function to work around a gcc bug.
     void setRegularLevel () {
         m_allregular = true;
@@ -497,7 +496,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         }
 
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
-
         if (plt_multiple_cuts && nmulticuts > 0)
         {
             amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n"; 
