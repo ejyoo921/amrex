@@ -204,7 +204,8 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  Array4<Real> const& fcx, Array4<Real> const& fcy,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
-                 bool cover_multiple_cuts, int& nsmallfaces) noexcept
+                 bool cover_multiple_cuts, int& nsmallfaces,
+                 bool plt_multiple_cuts, Array4<Real> const& mt_fcx, Array4<Real> const& mt_fcy) noexcept
 {
 #ifdef AMREX_USE_FLOAT
     constexpr Real small = 1.e-5_rt;
@@ -311,6 +312,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (fy(i  ,j+1,0) == Type::irregular) { ++ncuts; }
                 if (ncuts > 2) {
                     Gpu::Atomic::Add(dp,1);
+                    if (plt_multiple_cuts){
+                        mt_fcx(i,j,k,0) = 10.0;
+                    }
                 }
             }
         }
@@ -334,6 +338,9 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             {
                 levset(i,j,k) = Real(0.0);
                 Gpu::Atomic::Add(dp+1,1);
+                if (plt_multiple_cuts){
+                    mt_fcy(i,j,k,0) = 10.0;
+                }
             }
         }
     });
