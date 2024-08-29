@@ -367,10 +367,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& bct = m_bndrycent.array(mfi);
                 Array4<Real> const& bnm = m_bndrynorm.array(mfi);
 
-                Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
-                Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
-                Array4<Real> const& multicut_arr_z = multicut_fcz.array(mfi);
-
                 AMREX_D_TERM(Array4<Real> const& apx = m_areafrac[0].array(mfi);,
                              Array4<Real> const& apy = m_areafrac[1].array(mfi);,
                              Array4<Real> const& apz = m_areafrac[2].array(mfi););
@@ -430,6 +426,10 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& ym2 = M2[1].array();
                 Array4<Real> const& zm2 = M2[2].array();
 
+                Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
+                Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
+                Array4<Real> const& multicut_arr_z = multicut_fcz.array(mfi);
+
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
                                   xm2, ym2, zm2, dx, problo, cover_multiple_cuts, plt_multiple_cuts, multicut_arr_x, multicut_arr_y, multicut_arr_z);
@@ -482,6 +482,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                           {facetype[1].const_array(), facetype[0].const_array()},
                                           clst, geom);
                 }
+
+                Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
+                Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
 
                 nmc = build_faces(vbx, cfg, ftx, fty, lst, xip, yip, apx, apy, fcx, fcy,
                                   dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, multicut_arr_x, multicut_arr_y);
