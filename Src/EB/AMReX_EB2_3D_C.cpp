@@ -1,6 +1,6 @@
 #include <AMReX_EB2_C.H>
 
-#include <AMReX_MultiFab.H> 
+#include <AMReX_MultiFab.H>
 #include <AMReX_PlotFileUtil.H>
 
 namespace amrex::EB2 {

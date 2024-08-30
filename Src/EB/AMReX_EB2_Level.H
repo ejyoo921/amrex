@@ -171,14 +171,14 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     Real small_volfrac = 1.e-14;
 #endif
     bool cover_multiple_cuts = false;
-    bool plt_multiple_cuts = false; 
+    bool plt_multiple_cuts = false;
     int maxiter = 32;
     {
         ParmParse pp("eb2");
         pp.queryAdd("small_volfrac", small_volfrac);
         pp.queryAdd("cover_multiple_cuts", cover_multiple_cuts);
         pp.queryAdd("maxiter", maxiter);
-        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts); 
+        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts);
     }
     maxiter = std::min(100000, maxiter);
 
@@ -497,7 +497,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
         if (plt_multiple_cuts && nmulticuts > 0)
         {
-            amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n"; 
+            amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n";
             amrex::Print() << "plotting multicut locations..." << "\n";
 
             WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
