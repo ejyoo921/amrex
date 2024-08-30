@@ -517,7 +517,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 }
             #endif
 
-            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
+            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
 
         if (nsmallcells == 0 && nmulticuts == 0) {
