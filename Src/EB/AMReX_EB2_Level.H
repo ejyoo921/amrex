@@ -479,14 +479,11 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                           clst, geom);
                 }
 
-                AMREX_D_TERM(Array4<Real> const& mcx = multicut_face[0].array(mfi);,
-                             Array4<Real> const& mcy = multicut_face[1].array(mfi));,
-
                 nmc = build_faces(vbx, cfg, ftx, fty, lst, xip, yip, apx, apy, fcx, fcy,
-                                  dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, mcx, mcy);
+                                  dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, mcx);
 
                 build_cells(vbx, cfg, ftx, fty, apx, apy, dx, vfr, ctr,
-                            bar, bct, bnm, lst, small_volfrac, geom, extend_domain_face,
+                            bar, bct, bnm, lst, small_volfrac, geom, extend_domain_face, plt_multiple_cuts,
                             nsm, nmc);
 #endif
                 nsmallcells += nsm;
@@ -500,10 +497,26 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
             amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n";
             amrex::Print() << "plotting multicut locations..." << "\n";
 
-            WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
-            WriteSingleLevelPlotfile("plt.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
-            WriteSingleLevelPlotfile("plt.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
-            
+            #if (AMREX_SPACEDIM == 3)
+                if (!multicut_face[0].empty())
+                {
+                    WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
+                }
+                if (!multicut_face[1].empty())
+                {
+                    WriteSingleLevelPlotfile("plt.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
+                }
+                if (!multicut_face[2].empty())
+                {
+                    WriteSingleLevelPlotfile("plt.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
+                }
+            #elif (AMREX_SPACEDIM == 2)
+                if (!multicut_face[0].empty())
+                {
+                    WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
+                }
+            #endif
+
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
         }
 

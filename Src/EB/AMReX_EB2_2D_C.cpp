@@ -205,7 +205,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
                  bool cover_multiple_cuts, int& nsmallfaces,
-                 bool plt_multiple_cuts, Array4<Real> const& mt_fcx, Array4<Real> const& mt_fcy) noexcept
+                 bool plt_multiple_cuts, Array4<Real> const& mt_fcx) noexcept
 {
 #ifdef AMREX_USE_FLOAT
     constexpr Real small = 1.e-5_rt;
@@ -313,7 +313,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (ncuts > 2) {
                     Gpu::Atomic::Add(dp,1);
                     if (plt_multiple_cuts){
-                        mt_fcx(i,j,k,0) = 10.0;
+                        mt_fcx(i,j,k) = 10.0;
                     }
                 }
             }
@@ -338,9 +338,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             {
                 levset(i,j,k) = Real(0.0);
                 Gpu::Atomic::Add(dp+1,1);
-                if (plt_multiple_cuts){
-                    mt_fcy(i,j,k,0) = 10.0;
-                }
             }
         }
     });
@@ -350,7 +347,12 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     nsmallfaces += *(hp+1);
 
     if (*hp > 0 && !cover_multiple_cuts) {
-        amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+        if (plt_multiple_cuts){
+                amrex::Print() << "Passing EB2::build_cells" << "\n";
+        }
+        else{
+            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+        }
     }
 
     return *hp;
@@ -364,6 +366,7 @@ void build_cells (Box const& bx, Array4<EBCellFlag> const& cell,
                   Array4<Real> const& barea, Array4<Real> const& bcent,
                   Array4<Real> const& bnorm, Array4<Real> const& levset,
                   Real small_volfrac, Geometry const& geom, bool extend_domain_face,
+                  bool plt_multiple_cuts,
                   int& nsmallcells, int const nmulticuts) noexcept
 {
     Gpu::Buffer<int> smc = {0};

@@ -576,7 +576,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    mcy(i,j,k) = 10.0;
+                    mcy(i,j,k) = 20.0;
                 }
             }
 
@@ -687,7 +687,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    mcz(i,j,k) = 10.0;
+                    mcz(i,j,k) = 30.0;
                 }
             }
 
