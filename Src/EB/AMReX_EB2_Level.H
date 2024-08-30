@@ -49,6 +49,8 @@ public:
     void fillBndryNorm (   MultiFab& bndrynorm, const Geometry& geom) const;
     void fillAreaFrac (Array<MultiCutFab*,AMREX_SPACEDIM> const& areafrac, const Geometry& geom) const;
     void fillAreaFrac (Array<   MultiFab*,AMREX_SPACEDIM> const& areafrac, const Geometry& geom) const;
+    void fillFaceMulticut (Array<MultiCutFab*,AMREX_SPACEDIM> const& multicut_face, const Geometry& geom) const;
+    void fillFaceMulticut (Array<   MultiFab*,AMREX_SPACEDIM> const& multicut_face, const Geometry& geom) const;
     void fillFaceCent (Array<MultiCutFab*,AMREX_SPACEDIM> const& facecent, const Geometry& geom) const;
     void fillFaceCent (Array<   MultiFab*,AMREX_SPACEDIM> const& facecent, const Geometry& geom) const;
     void fillEdgeCent (Array<MultiCutFab*,AMREX_SPACEDIM> const& edgecent, const Geometry& geom) const;
@@ -92,6 +94,7 @@ protected:
     MultiFab m_bndrycent;
     MultiFab m_bndrynorm;
     Array<MultiFab,AMREX_SPACEDIM> m_areafrac;
+    Array<MultiFab,AMREX_SPACEDIM> multicut_face;
     Array<MultiFab,AMREX_SPACEDIM> m_facecent;
     Array<MultiFab,AMREX_SPACEDIM> m_edgecent;
     iMultiFab m_cutcellmask;
@@ -99,10 +102,6 @@ protected:
     bool m_ok = false;
     bool m_has_eb_info = true;
     IndexSpace const* m_parent;
-
-    MultiFab multicut_fcx;
-    MultiFab multicut_fcy;
-    MultiFab multicut_fcz;
 
 private:
     template <typename G> friend class GShopLevel;
@@ -298,12 +297,10 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndrynorm.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
 
-    multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info); 
-    multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info); 
-    multicut_fcz.define(m_grids, m_dmap, 1, ng, mf_info); 
-
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         m_areafrac[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
+                                m_dmap, 1, ng, mf_info);
+        multicut_face[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, 1, ng, mf_info);
         m_facecent[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
                                 m_dmap, AMREX_SPACEDIM-1, ng, mf_info);
@@ -370,6 +367,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 AMREX_D_TERM(Array4<Real> const& apx = m_areafrac[0].array(mfi);,
                              Array4<Real> const& apy = m_areafrac[1].array(mfi);,
                              Array4<Real> const& apz = m_areafrac[2].array(mfi););
+                AMREX_D_TERM(Array4<Real> const& mcx = multicut_face[0].array(mfi);,
+                             Array4<Real> const& mcy = multicut_face[1].array(mfi);,
+                             Array4<Real> const& mcz = multicut_face[2].array(mfi););
                 AMREX_D_TERM(Array4<Real> const& fcx = m_facecent[0].array(mfi);,
                              Array4<Real> const& fcy = m_facecent[1].array(mfi);,
                              Array4<Real> const& fcz = m_facecent[2].array(mfi););
@@ -426,13 +426,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& ym2 = M2[1].array();
                 Array4<Real> const& zm2 = M2[2].array();
 
-                Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
-                Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
-                Array4<Real> const& multicut_arr_z = multicut_fcz.array(mfi);
-
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
-                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts, plt_multiple_cuts, multicut_arr_x, multicut_arr_y, multicut_arr_z);
+                                  xm2, ym2, zm2, dx, problo, cover_multiple_cuts, plt_multiple_cuts, mcx, mcy, mcz);
 
                 cellflagtmp.resize(m_cellflag[mfi].box());
                 Elixir cellflagtmp_eli = cellflagtmp.elixir();
@@ -483,11 +479,11 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                           clst, geom);
                 }
 
-                Array4<Real> const& multicut_arr_x = multicut_fcx.array(mfi);
-                Array4<Real> const& multicut_arr_y = multicut_fcy.array(mfi);
+                AMREX_D_TERM(Array4<Real> const& mcx = multicut_face[0].array(mfi);,
+                             Array4<Real> const& mcy = multicut_face[1].array(mfi));,
 
                 nmc = build_faces(vbx, cfg, ftx, fty, lst, xip, yip, apx, apy, fcx, fcy,
-                                  dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, multicut_arr_x, multicut_arr_y);
+                                  dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, mcx, mcy);
 
                 build_cells(vbx, cfg, ftx, fty, apx, apy, dx, vfr, ctr,
                             bar, bct, bnm, lst, small_volfrac, geom, extend_domain_face,
@@ -504,9 +500,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
             amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n"; 
             amrex::Print() << "plotting multicut locations..." << "\n";
 
-            WriteSingleLevelPlotfile("plt.x", multicut_fcx, {"multicut_x"}, geom, 0.0, 0);
-            WriteSingleLevelPlotfile("plt.y", multicut_fcy, {"multicut_y"}, geom, 0.0, 0);
-            WriteSingleLevelPlotfile("plt.z", multicut_fcz, {"multicut_z"}, geom, 0.0, 0);
+            WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
+            WriteSingleLevelPlotfile("plt.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
+            WriteSingleLevelPlotfile("plt.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
             
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
         }

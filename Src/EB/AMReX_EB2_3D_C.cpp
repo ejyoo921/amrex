@@ -372,7 +372,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                  GpuArray<Real,AMREX_SPACEDIM> const& dx,
                  GpuArray<Real,AMREX_SPACEDIM> const& problo,
                  bool cover_multiple_cuts,
-                 bool plt_multiple_cuts, Array4<Real> const& mt_fcx, Array4<Real> const& mt_fcy, Array4<Real> const& mt_fcz) noexcept
+                 bool plt_multiple_cuts, Array4<Real> const& mcx, Array4<Real> const& mcy, Array4<Real> const& mcz) noexcept
 {
     Gpu::Buffer<int> nmulticuts = {0};
     int* hp = nmulticuts.hostData();
@@ -465,7 +465,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    mt_fcx(i,j,k,0) = 10.0;
+                    mcx(i,j,k) = 10.0;
                 }
             }
 
@@ -576,7 +576,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    mt_fcy(i,j,k,0) = 10.0;
+                    mcy(i,j,k) = 10.0;
                 }
             }
 
@@ -687,7 +687,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
                 if (plt_multiple_cuts){
-                    mt_fcz(i,j,k,0) = 10.0;
+                    mcz(i,j,k) = 10.0;
                 }
             }
 
