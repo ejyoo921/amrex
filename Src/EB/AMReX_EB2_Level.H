@@ -172,14 +172,14 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     Real small_volfrac = 1.e-14;
 #endif
     bool cover_multiple_cuts = false;
-    bool plt_multiple_cuts = false; 
+    bool plt_multiple_cuts = false;
     int maxiter = 32;
     {
         ParmParse pp("eb2");
         pp.queryAdd("small_volfrac", small_volfrac);
         pp.queryAdd("cover_multiple_cuts", cover_multiple_cuts);
         pp.queryAdd("maxiter", maxiter);
-        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts); 
+        pp.queryAdd("plt_multiple_cuts", plt_multiple_cuts);
     }
     maxiter = std::min(100000, maxiter);
 
@@ -298,9 +298,9 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
     m_bndrycent.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
     m_bndrynorm.define(m_grids, m_dmap, AMREX_SPACEDIM, ng, mf_info);
 
-    multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info); 
-    multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info); 
-    multicut_fcz.define(m_grids, m_dmap, 1, ng, mf_info); 
+    multicut_fcx.define(m_grids, m_dmap, 1, ng, mf_info);
+    multicut_fcy.define(m_grids, m_dmap, 1, ng, mf_info);
+    multicut_fcz.define(m_grids, m_dmap, 1, ng, mf_info);
 
     for (int idim = 0; idim < AMREX_SPACEDIM; ++idim) {
         m_areafrac[idim].define(amrex::convert(m_grids, IntVect::TheDimensionVector(idim)),
@@ -501,14 +501,14 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         ParallelAllReduce::Sum<int>({nsmallcells,nmulticuts}, ParallelContext::CommunicatorSub());
         if (plt_multiple_cuts && nmulticuts > 0)
         {
-            amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n"; 
+            amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n";
             amrex::Print() << "plotting multicut locations..." << "\n";
 
             WriteSingleLevelPlotfile("plt.x", multicut_fcx, {"multicut_x"}, geom, 0.0, 0);
             WriteSingleLevelPlotfile("plt.y", multicut_fcy, {"multicut_y"}, geom, 0.0, 0);
             WriteSingleLevelPlotfile("plt.z", multicut_fcz, {"multicut_z"}, geom, 0.0, 0);
-            
-            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported"); 
+
+            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
 
         if (nsmallcells == 0 && nmulticuts == 0) {
