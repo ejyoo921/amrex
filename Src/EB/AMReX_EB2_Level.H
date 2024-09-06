@@ -486,7 +486,7 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                   dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, mcx);
 
                 build_cells(vbx, cfg, ftx, fty, apx, apy, dx, vfr, ctr,
-                            bar, bct, bnm, lst, small_volfrac, geom, extend_domain_face, plt_multiple_cuts,
+                            bar, bct, bnm, lst, small_volfrac, geom, extend_domain_face,
                             nsm, nmc);
 #endif
                 nsmallcells += nsm;
