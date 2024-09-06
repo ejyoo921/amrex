@@ -367,9 +367,6 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 AMREX_D_TERM(Array4<Real> const& apx = m_areafrac[0].array(mfi);,
                              Array4<Real> const& apy = m_areafrac[1].array(mfi);,
                              Array4<Real> const& apz = m_areafrac[2].array(mfi););
-                AMREX_D_TERM(Array4<Real> const& mcx = multicut_face[0].array(mfi);,
-                             Array4<Real> const& mcy = multicut_face[1].array(mfi);,
-                             Array4<Real> const& mcz = multicut_face[2].array(mfi););
                 AMREX_D_TERM(Array4<Real> const& fcx = m_facecent[0].array(mfi);,
                              Array4<Real> const& fcy = m_facecent[1].array(mfi);,
                              Array4<Real> const& fcz = m_facecent[2].array(mfi););
@@ -426,6 +423,10 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                 Array4<Real> const& ym2 = M2[1].array();
                 Array4<Real> const& zm2 = M2[2].array();
 
+                AMREX_D_TERM(Array4<Real> const& mcx = multicut_face[0].array(mfi);,
+                             Array4<Real> const& mcy = multicut_face[1].array(mfi);,
+                             Array4<Real> const& mcz = multicut_face[2].array(mfi););
+
                 nmc = build_faces(vbx, cfg, ftx, fty, ftz, xdg, ydg, zdg, lst,
                                   xip, yip, zip, apx, apy, apz, fcx, fcy, fcz,
                                   xm2, ym2, zm2, dx, problo, cover_multiple_cuts, plt_multiple_cuts, mcx, mcy, mcz);
@@ -478,6 +479,8 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
                                           {facetype[1].const_array(), facetype[0].const_array()},
                                           clst, geom);
                 }
+
+                Array4<Real> const& mcx = multicut_face[0].array(mfi);
 
                 nmc = build_faces(vbx, cfg, ftx, fty, lst, xip, yip, apx, apy, fcx, fcy,
                                   dx, problo, cover_multiple_cuts, nsm, plt_multiple_cuts, mcx);
