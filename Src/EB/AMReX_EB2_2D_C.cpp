@@ -313,7 +313,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 if (ncuts > 2) {
                     Gpu::Atomic::Add(dp,1);
                     if (plt_multiple_cuts){
-                        mcx(i,j,k) = 10.0;
+                        mcx(i,j,k) = ncuts;
                     }
                 }
             }
@@ -347,10 +347,7 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
     nsmallfaces += *(hp+1);
 
     if (*hp > 0 && !cover_multiple_cuts) {
-        if (plt_multiple_cuts){
-                amrex::Print() << "Passing EB2::build_cells" << "\n";
-        }
-        else{
+        if (!plt_multiple_cuts){
             amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
         }
     }

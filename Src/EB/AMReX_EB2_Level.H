@@ -503,24 +503,23 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
             #if (AMREX_SPACEDIM == 3)
                 if (!multicut_face[0].empty())
                 {
-                    WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
+                    WriteSingleLevelPlotfile("plt.multicut.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
                 }
                 if (!multicut_face[1].empty())
                 {
-                    WriteSingleLevelPlotfile("plt.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
+                    WriteSingleLevelPlotfile("plt.multicut.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
                 }
                 if (!multicut_face[2].empty())
                 {
-                    WriteSingleLevelPlotfile("plt.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
+                    WriteSingleLevelPlotfile("plt.multicut.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
                 }
             #elif (AMREX_SPACEDIM == 2)
                 if (!multicut_face[0].empty())
                 {
-                    WriteSingleLevelPlotfile("plt.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
+                    WriteSingleLevelPlotfile("plt.multicut", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
                 }
             #endif
-
-            amrex::Abort("amrex::EB2::build_faces: more than 2 cuts not supported");
+            amrex::Abort("amrex::EB2:: more than 2 cuts not supported");
         }
 
         if (nsmallcells == 0 && nmulticuts == 0) {
