@@ -466,9 +466,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                if (plt_multiple_cuts){
-                    mcx(i,j,k) = ncuts;
-                }
             }
 
             if ((ncuts > 2) || (lym <= small && lyp <= small && lzm <= small && lzp <= small)) {
@@ -497,6 +494,10 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 fx(i,j,k) = Type::covered;
             } else if (apx(i,j,k) == 1.0_rt) {
                 fx(i,j,k) = Type::regular;
+            }
+
+            if (plt_multiple_cuts){
+                mcx(i,j,k) = ncuts;
             }
         }
     });
@@ -577,9 +578,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                if (plt_multiple_cuts){
-                    mcy(i,j,k) = ncuts;
-                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lzm <= small && lzp <= small)) {
@@ -608,6 +606,10 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 fy(i,j,k) = Type::covered;
             } else if (apy(i,j,k) == 1.0_rt) {
                 fy(i,j,k) = Type::regular;
+            }
+
+            if (plt_multiple_cuts){
+                mcy(i,j,k) = ncuts;
             }
         }
     });
@@ -688,9 +690,6 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
 
             if (ncuts > 2) {
                 Gpu::Atomic::Add(dp,1);
-                if (plt_multiple_cuts){
-                    mcz(i,j,k) = ncuts;
-                }
             }
 
             if ((ncuts > 2) || (lxm <= small && lxp <= small && lym <= small && lyp <= small)) {
@@ -719,6 +718,10 @@ int build_faces (Box const& bx, Array4<EBCellFlag> const& cell,
                 fz(i,j,k) = Type::covered;
             } else if (apz(i,j,k) == 1.0_rt) {
                 fz(i,j,k) = Type::regular;
+            }
+
+            if (plt_multiple_cuts){
+                mcz(i,j,k) = ncuts;
             }
         }
     });

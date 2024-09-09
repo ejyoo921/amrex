@@ -498,23 +498,24 @@ GShopLevel<G>::define_fine (G const& gshop, const Geometry& geom,
         if (plt_multiple_cuts && nmulticuts > 0)
         {
             amrex::Print() << "Total number of multicuts = " << nmulticuts << "\n";
-            amrex::Print() << "plotting multicut locations..." << "\n";
+            amrex::Print() << "Plotting multicut locations..." << "\n";
+            amrex::Print() << "Max is = " << multicut_face[0].max(0) << "\n";
 
             #if (AMREX_SPACEDIM == 3)
-                if (!multicut_face[0].empty())
+                if (multicut_face[0].max(0) > 2)
                 {
                     WriteSingleLevelPlotfile("plt.multicut.x", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
                 }
-                if (!multicut_face[1].empty())
+                if (multicut_face[1].max(0) > 2)
                 {
                     WriteSingleLevelPlotfile("plt.multicut.y", multicut_face[1], {"multicut_fcy"}, geom, 0.0, 0);
                 }
-                if (!multicut_face[2].empty())
+                if (multicut_face[2].max(0) > 2)
                 {
                     WriteSingleLevelPlotfile("plt.multicut.z", multicut_face[2], {"multicut_fcz"}, geom, 0.0, 0);
                 }
             #elif (AMREX_SPACEDIM == 2)
-                if (!multicut_face[0].empty())
+                if (multicut_face[0].max(0) > 2)
                 {
                     WriteSingleLevelPlotfile("plt.multicut", multicut_face[0], {"multicut_fcx"}, geom, 0.0, 0);
                 }
